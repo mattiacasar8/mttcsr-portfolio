@@ -1,0 +1,163 @@
+/* ========================================
+   VARIABLES
+   ======================================== */
+   :root {
+    /* Colors */
+    --bg-primary: #000000;
+    --white-100: rgba(255, 255, 255, 1);
+    --white-80: rgba(255, 255, 255, 0.8);
+    
+    /* Spacing - multiples of 4 */
+    --space-8: 8px;
+    --space-32: 32px;
+    --space-40: 40px;
+    
+    /* Typography */
+    --font-serif: "Instrument Serif", serif;
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ========================================
+   BASE
+   ======================================== */
+body {
+    margin: 0;
+    background: var(--bg-primary);
+    color: var(--white-100);
+    overflow-x: hidden;
+}
+
+/* ========================================
+   CANVAS BACKGROUND
+   ======================================== */
+.canvas-container {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+}
+
+#bg-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ========================================
+   MAIN LAYOUT
+   ======================================== */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    padding: var(--space-32) var(--space-40);
+    gap: var(--space-8);
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+}
+
+.hero-name {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--white-100);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.hero-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--white-80);
+    margin: 0;
+    text-transform: lowercase;
+}
+
+/* ========================================
+   ABOUT SECTION
+   ======================================== */
+.about-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-8);
+}
+
+.section-title {
+    font-family: var(--font-serif);
+    font-size: 0.875rem;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--white-80);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.about-text {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--white-80);
+    margin: 0;
+    line-height: 1.6;
+    max-width: 600px;
+}
+
+/* ========================================
+   CONTACT LINKS
+   ======================================== */
+.contact-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin-top: var(--space-8);
+}
+
+.contact-links a {
+    font-family: var(--font-serif);
+    font-size: 0.875rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--white-80);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.contact-links a:hover {
+    color: var(--white-100);
+    text-decoration: underline;
+}
+
+.separator {
+    color: var(--white-80);
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .main-container {
+        padding: 24px;
+    }
+    
+    .hero-name {
+        font-size: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 1rem;
+    }
+}
