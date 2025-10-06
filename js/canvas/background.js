@@ -7,9 +7,9 @@ class MorphoASCII {
         
         // ASCII character mapping
         this.chars = [
-            { char: ' ', threshold: 0.00 },
-            { char: '∙', threshold: 0.10 },
-            { char: ':', threshold: 0.20 },
+            { char: ' ', threshold: 0.10 },
+            { char: '.', threshold: 0.20 },
+            { char: ':', threshold: 0.25 },
             { char: 'r', threshold: 0.30 },
             { char: 's', threshold: 0.40 },
             { char: 'c', threshold: 0.50 },
@@ -22,18 +22,18 @@ class MorphoASCII {
         
         // Reaction-diffusion parameters
         this.params = {
-            feed: 0.097,
+            feed: 0.09,
             kill: 0.059,
             dA: 0.84,
             dB: 0.35,
             dt: 1.0
         };
         
-        this.cellSize = 13;
-        this.fontSize = 19;
+        this.cellSize = 10;
+        this.fontSize = 10;
         this.contrastPower = 0.60;
         this.updatesPerFrame = 4;
-        this.brushRadius = 1.5;
+        this.brushRadius = 1;
         
         this.resize();
         this.init();
@@ -164,7 +164,7 @@ class MorphoASCII {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Setup text rendering
-        this.ctx.font = `${this.fontSize}px "Courier New", monospace`;
+        this.ctx.font = `${this.fontSize}px "Inter", monospace`;
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillStyle = '#ffffff';
