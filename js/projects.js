@@ -102,8 +102,8 @@ class ProjectLoader {
     }
     
     async loadGalleryMedia(gallery, folder) {
-        // Common media file patterns to try
-        const mediaExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'webm'];
+        // Only look for converted formats: webp (images) and webm (videos)
+        const mediaExtensions = ['webp', 'webm'];
         const prefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
         
         let foundMedia = false;
