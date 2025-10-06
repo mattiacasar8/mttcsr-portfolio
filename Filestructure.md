@@ -1,75 +1,83 @@
-# mttcsr.com - File Structure
+# File Structure
 
 ```
 mttcsr-portfolio/
-├── index.html
+│
+├── index.html                 # Main HTML structure
+│
 ├── css/
-│   ├── reset.css
-│   └── style.css
+│   ├── reset.css             # CSS reset
+│   └── style.css             # Main stylesheet
+│
 ├── js/
-│   ├── main.js
+│   ├── main.js               # Main initialization
+│   ├── projects.js           # File-based CMS loader
 │   └── canvas/
-│       └── background.js
+│       └── background.js     # Reaction-diffusion background
+│
 ├── assets/
-│   ├── images/
-│   └── videos/
-└── README.md
+│   ├── projects/             # Project folders (file-based CMS)
+│   │   ├── 01-terna-vr/
+│   │   │   ├── info.txt      # #Title + description
+│   │   │   ├── 01-media.jpg  # Numbered media files
+│   │   │   ├── 02-media.mp4
+│   │   │   └── ...
+│   │   │
+│   │   ├── 02-eni-agri/
+│   │   │   └── ...
+│   │   │
+│   │   └── 03-chora/
+│   │       └── ...
+│   │
+│   └── reel/                 # Reel media (numbered files)
+│       ├── 01-video.mp4
+│       ├── 02-still.jpg
+│       └── ...
+│
+└── README.md                 # Documentation
+
 ```
 
-## Setup Instructions
+## File Naming Conventions
 
-1. **Clone/Create repo**
-```bash
-mkdir mttcsr-portfolio && cd mttcsr-portfolio
-git init
-```
+### Project Folders
+- Format: `XX-project-name/` (e.g., `01-terna-vr/`)
+- Number prefix determines display order
+- Use lowercase and hyphens
 
-2. **Create folder structure**
-```bash
-mkdir -p css js/canvas assets/images assets/videos
-```
+### Media Files
+- Format: `XX-filename.ext` (e.g., `01-hero.jpg`)
+- Number prefix determines order within gallery
+- Supported: `.jpg`, `.jpeg`, `.png`, `.gif`, `.mp4`, `.webm`
 
-3. **Add files** (see artifacts below)
+### Info Files
+- Filename: `info.txt`
+- Format:
+  ```
+  #Project Title
+  Project description...
+  
+  Optional second paragraph.
+  ```
 
-4. **Test locally**
-```bash
-# Use any local server, e.g.:
-python -m http.server 8000
-# or
-npx serve
-```
+## Adding New Content
 
-5. **Push to GitHub**
-```bash
-git add .
-git commit -m "Initial structure"
-git push
-```
+1. **New Project**:
+   - Create folder: `assets/projects/04-new-project/`
+   - Add `info.txt`
+   - Add numbered media files
+   - Add section in `index.html` with `data-project-folder="04-new-project"`
 
-## File Purposes
+2. **New Reel Media**:
+   - Add numbered files to `assets/reel/`
+   - Automatically loads on page refresh
 
-- **reset.css**: Browser normalization
-- **style.css**: All styles (variables, layout, components)
-- **js/main.js**: Initialization and coordination
-- **js/canvas/background.js**: Interactive canvas logic
+## How It Works
 
-## Adding New Sections
+The site uses a file-based CMS approach:
+- `projects.js` reads directory contents at runtime
+- Parses `info.txt` for project metadata
+- Populates galleries with media files in order
+- Implements autoscroll behavior (desktop) and swipe (mobile)
 
-To add a project/reel section:
-
-1. Add HTML in `index.html`:
-```html
-<section class="content-section">
-    <div class="section-container">
-        <h2>Section Title</h2>
-        <p class="section-description">Description text</p>
-        <div class="section-media">
-            <!-- video or image -->
-        </div>
-    </div>
-</section>
-```
-
-2. Style is already handled by `components/section.css`
-
-3. Sections will stack vertically on scroll
+No build step required - just add files and reload.

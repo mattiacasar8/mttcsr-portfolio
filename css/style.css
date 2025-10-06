@@ -1,20 +1,61 @@
 /* ========================================
    VARIABLES
    ======================================== */
-   :root {
+:root {
     /* Colors */
     --bg-primary: #000000;
     --white-100: rgba(255, 255, 255, 1);
     --white-80: rgba(255, 255, 255, 0.8);
+    --white-60: rgba(255, 255, 255, 0.6);
     
     /* Spacing - multiples of 4 */
     --space-8: 8px;
+    --space-16: 16px;
+    --space-24: 24px;
     --space-32: 32px;
     --space-40: 40px;
+    --space-64: 64px;
     
     /* Typography */
     --font-serif: "Instrument Serif", serif;
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Loader Overlay */
+.loader-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 200ms ease;
+}
+
+.loader-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 6px;
+    width: min(60vmin, 360px);
+    height: min(60vmin, 360px);
+}
+
+.loader-row {
+    display: contents;
+}
+
+.loader-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    background: #000000;
+    font-family: "Inter", monospace;
+    font-size: clamp(12px, 4vmin, 22px);
+    line-height: 1;
+    user-select: none;
 }
 
 /* ========================================
@@ -25,6 +66,50 @@ body {
     background: var(--bg-primary);
     color: var(--white-100);
     overflow-x: hidden;
+    text-wrap: pretty;
+}
+
+/* ========================================
+   HERO SECTION
+   ======================================== */
+.hero-wrapper {
+    height: 100vh;
+    width: 100%;
+}
+
+.hero-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--space-32) var(--space-40);
+    gap: var(--space-8);
+}
+
+.hero-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.hero-name {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--white-100);
+    margin: 0;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+
+.hero-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--white-80);
+    margin: 0;
+    text-transform: lowercase;
 }
 
 /* ========================================
@@ -43,48 +128,6 @@ body {
 }
 
 /* ========================================
-   MAIN LAYOUT
-   ======================================== */
-.main-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100%;
-    padding: var(--space-32) var(--space-40);
-    gap: var(--space-8);
-}
-
-/* ========================================
-   HERO SECTION
-   ======================================== */
-.hero-section {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-8);
-}
-
-.hero-name {
-    font-family: var(--font-serif);
-    font-size: 2.5rem;
-    font-weight: 400;
-    font-style: normal;
-    color: var(--white-100);
-    margin: 0;
-    line-height: 1.2;
-}
-
-.hero-title {
-    font-family: var(--font-serif);
-    font-size: 1.25rem;
-    font-weight: 400;
-    font-style: normal;
-    color: var(--white-80);
-    margin: 0;
-    text-transform: lowercase;
-}
-
-/* ========================================
    ABOUT SECTION
    ======================================== */
 .about-section {
@@ -92,17 +135,15 @@ body {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-8);
+    max-width: 800px;
 }
 
-.section-title {
+.about-title {
     font-family: var(--font-serif);
-    font-size: 0.875rem;
+    font-size: 1.5rem;
     font-weight: 400;
-    font-style: normal;
-    color: var(--white-80);
+    color: var(--white-100);
     margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
 .about-text {
@@ -112,22 +153,67 @@ body {
     color: var(--white-80);
     margin: 0;
     line-height: 1.6;
-    max-width: 600px;
 }
 
 /* ========================================
-   CONTACT LINKS
+   SCROLL INDICATOR
    ======================================== */
+.scroll-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+    opacity: 0.6;
+    animation: bounce 2s ease-in-out infinite;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.scroll-text {
+    font-family: var(--font-serif);
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--white-80);
+    text-transform: lowercase;
+}
+
+.scroll-arrow {
+    color: var(--white-80);
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+}
+
+/* ========================================
+   FIXED FOOTER
+   ======================================== */
+.fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-16) var(--space-40);
+    display: flex;
+    justify-content: flex-start;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+    z-index: 100;
+}
+
 .contact-links {
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    margin-top: var(--space-8);
 }
 
 .contact-links a {
     font-family: var(--font-serif);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 400;
     font-style: italic;
     color: var(--white-80);
@@ -142,14 +228,140 @@ body {
 
 .separator {
     color: var(--white-80);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
+}
+
+/* ========================================
+   PROJECTS CONTAINER
+   ======================================== */
+.projects-container {
+    width: 100%;
+    background: var(--bg-primary);
+}
+
+/* ========================================
+   PROJECT SECTIONS
+   ======================================== */
+.project-section {
+    padding: var(--space-32) var(--space-40);
+    width: 100%;
+}
+
+.project-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+}
+
+.project-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--white-100);
+    margin: 0;
+}
+
+.project-description {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--white-80);
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0;
+    white-space: pre-line;
+}
+
+/* ========================================
+   GALLERY
+   ======================================== */
+.project-gallery {
+    width: 100%;
+    height: 33vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    gap: var(--space-16);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+
+.project-gallery::-webkit-scrollbar {
+    display: none;
+}
+
+.gallery-item {
+    flex-shrink: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.gallery-item img,
+.gallery-item video {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* ========================================
+   CTA SECTION
+   ======================================== */
+.cta-section {
+    padding: var(--space-64) var(--space-40);
+    width: 100%;
+}
+
+.cta-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+}
+
+.cta-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: var(--white-100);
+    margin: 0;
+}
+
+.cta-text {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--white-80);
+    line-height: 1.6;
+    max-width: 800px;
+    margin: 0;
+}
+
+.cta-button {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--white-100);
+    text-decoration: none;
+    padding: var(--space-16) var(--space-32);
+    border: 1px solid var(--white-80);
+    transition: all 0.3s ease;
+    align-self: flex-start;
+}
+
+.cta-button:hover {
+    background: var(--white-100);
+    color: var(--bg-primary);
+    border-color: var(--white-100);
 }
 
 /* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
-    .main-container {
+    .hero-content {
         padding: 24px;
     }
     
@@ -159,5 +371,27 @@ body {
     
     .hero-title {
         font-size: 1rem;
+    }
+
+    .about-title,
+    .project-title,
+    .cta-title {
+        font-size: 1.25rem;
+    }
+
+    .project-section {
+        padding: var(--space-24) 24px;
+    }
+
+    .project-gallery {
+        height: 33vh;
+    }
+
+    .cta-section {
+        padding: var(--space-32) 24px;
+    }
+
+    .fixed-footer {
+        padding: var(--space-8) 24px;
     }
 }

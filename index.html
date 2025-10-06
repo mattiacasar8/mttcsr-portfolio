@@ -15,39 +15,95 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Main Content -->
-    <main class="main-container">
-        <!-- Hero -->
-        <div class="hero-section">
-            <h1 class="hero-name">Mattia Casarotto</h1>
-            <p class="hero-title">multimedia designer</p>
+    <!-- Loader Overlay -->
+    <div id="loader-overlay" class="loader-overlay" aria-hidden="true">
+        <div class="loader-grid" role="img" aria-label="loading">
+            <!-- 8x8 cells will be injected by loader.js -->
         </div>
-        
-        <!-- Canvas Container -->
-        <div class="canvas-container">
-            <canvas id="bg-canvas"></canvas>
-        </div>
-        
-        <!-- About -->
-        <div class="about-section">
-            <h2 class="section-title">ABOUT</h2>
-            <p class="about-text">I’m Mattia, a multimedia designer. Big on sci-fi, videogames, and a storyteller at heart, I try to blend all this into my design work. To me, design is about striking a balance: an understanding of the problem, pushing creative boundaries, and delivering more than just a solution.</p>
+    </div>
+    <!-- Hero Section -->
+    <section class="hero-wrapper">
+        <div class="hero-content">
+            <div class="hero-header">
+                <h1 class="hero-name">Mattia Casarotto</h1>
+                <p class="hero-title">multimedia designer</p>
+            </div>
             
-            <!-- Contact Links -->
-            <div class="contact-links">
-                <a href="https://instagram.com/mttcsr" target="_blank">instagram</a>
-                <span class="separator">|</span>
-                <a href="https://www.linkedin.com/in/mattia-casarotto/" target="_blank">linkedin</a>
-                <span class="separator">|</span>
-                <a href="mailto:mttcsr@gmail.com">email</a>
+            <!-- Canvas Container -->
+            <div class="canvas-container">
+                <canvas id="bg-canvas"></canvas>
+            </div>
+            
+            <!-- About -->
+            <div class="about-section">
+                <h2 class="about-title">About</h2>
+                <p class="about-text">I'm Mattia, a multimedia designer. Big on sci-fi, videogames, and a storyteller at heart, I try to blend all this into my design work. To me, design is about striking a balance: an understanding of the problem, pushing creative boundaries, and delivering more than just a solution.</p>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="scroll-indicator">
+                <span class="scroll-text">see more</span>
+                <svg class="scroll-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3L8 13M8 13L12 9M8 13L4 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
             </div>
         </div>
+    </section>
+
+    <!-- Projects Container -->
+    <main class="projects-container">
+        <!-- Project 1 -->
+        <section class="project-section" data-project-folder="01-intelligence-on-demand">
+            <div class="project-content">
+                <h3 class="project-title">Loading...</h3>
+                <div class="project-gallery"></div>
+                <p class="project-description">Loading project details...</p>
+            </div>
+        </section>
+
+        <!-- Project 2 -->
+        <section class="project-section" data-project-folder="02-reel">
+            <div class="project-content">
+                <h3 class="project-title">Loading...</h3>
+                <div class="project-gallery"></div>
+                <p class="project-description">Loading project details...</p>
+            </div>
+        </section>
+
+        <!-- Project 3 -->
+        <section class="project-section" data-project-folder="03-off-track">
+            <div class="project-content">
+                <h3 class="project-title">Loading...</h3>
+                <div class="project-gallery"></div>
+                <p class="project-description">Loading project details...</p>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="cta-content">
+                <h2 class="cta-title">Interested?</h2>
+                <p class="cta-text">Drop me a line to see the complete portfolio and discuss potential collaborations.</p>
+                <a href="mailto:mttcsr@gmail.com" class="cta-button">Get in touch</a>
+            </div>
+        </section>
     </main>
-    
+
+    <!-- Fixed Footer -->
+    <footer class="fixed-footer">
+        <div class="contact-links">
+            <a href="https://instagram.com/mttcsr" target="_blank">instagram</a>
+            <span class="separator">|</span>
+            <a href="https://www.linkedin.com/in/mattia-casarotto/" target="_blank">linkedin</a>
+            <span class="separator">|</span>
+            <a href="mailto:mttcsr@gmail.com">email</a>
+        </div>
+    </footer>
+
     <!-- JavaScript -->
+    <script src="js/loader.js"></script>
     <script src="js/canvas/background.js"></script>
+    <script src="js/projects.js"></script>
     <script src="js/main.js"></script>
-
-
 </body>
 </html>

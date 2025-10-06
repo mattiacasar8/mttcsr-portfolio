@@ -14,6 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Future: Add smooth scroll indicators, lazy loading, etc.
+    // Hide scroll indicator on scroll
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    if (scrollIndicator) {
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                scrollIndicator.classList.add('hidden');
+            } else {
+                scrollIndicator.classList.remove('hidden');
+            }
+        });
+    }
+    
     console.log('mttcsr.com — initialized');
 });

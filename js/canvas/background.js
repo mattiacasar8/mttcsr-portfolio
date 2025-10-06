@@ -1,4 +1,4 @@
-// Morphogenetic ASCII Field
+// Morphogenetic ASCII Field with idle management
 class MorphoASCII {
     constructor(canvas) {
         this.canvas = canvas;
@@ -35,10 +35,43 @@ class MorphoASCII {
         this.updatesPerFrame = 4;
         this.brushRadius = 1;
         
+        // Idle management
+        this.isActive = true;
+        this.idleTimeout = null;
+        this.idleDelay = 30000; // 30 seconds
+        this.animationFrameId = null;
+        
         this.resize();
         this.init();
         this.setupEvents();
         this.animate();
+        this.resetIdleTimer();
+    }
+    
+    resetIdleTimer() {
+        // Clear existing timeout
+        if (this.idleTimeout) {
+            clearTimeout(this.idleTimeout);
+        }
+        
+        // Restart animation if it was paused
+        if (!this.isActive) {
+            this.isActive = true;
+            this.animate();
+        }
+        
+        // Set new timeout
+        this.idleTimeout = setTimeout(() => {
+            this.pauseAnimation();
+        }, this.idleDelay);
+    }
+    
+    pauseAnimation() {
+        this.isActive = false;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
     }
     
     resize() {
@@ -193,12 +226,14 @@ class MorphoASCII {
     }
     
     animate() {
+        if (!this.isActive) return;
+        
         // Run multiple updates per frame for faster evolution
         for (let i = 0; i < this.updatesPerFrame; i++) {
             this.update();
         }
         this.draw();
-        requestAnimationFrame(() => this.animate());
+        this.animationFrameId = requestAnimationFrame(() => this.animate());
     }
     
     setupEvents() {
@@ -211,10 +246,19 @@ class MorphoASCII {
             return { x, y };
         };
         
+        // Reset idle timer on any interaction
+        const onInteraction = () => {
+            this.resetIdleTimer();
+        };
+        
         // Mouse events
-        this.canvas.addEventListener('mousedown', () => isDrawing = true);
+        this.canvas.addEventListener('mousedown', () => {
+            isDrawing = true;
+            onInteraction();
+        });
         this.canvas.addEventListener('mouseup', () => isDrawing = false);
         this.canvas.addEventListener('mouseleave', () => isDrawing = false);
+        this.canvas.addEventListener('mousemove', onInteraction);
         
         this.canvas.addEventListener('mousemove', (e) => {
             if (isDrawing) {
@@ -229,12 +273,14 @@ class MorphoASCII {
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             isDrawing = true;
+            onInteraction();
         });
         
         this.canvas.addEventListener('touchend', () => isDrawing = false);
         
         this.canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
+            onInteraction();
             if (isDrawing && e.touches[0]) {
                 const { x, y } = getGridPos(e.touches[0].clientX, e.touches[0].clientY);
                 if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
