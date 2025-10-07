@@ -289,10 +289,30 @@ class MorphoASCII {
             }
         });
         
-        // Resize handler
+        // Resize handler - ignore small mobile browser UI changes
+        let resizeTimeout;
+        let lastWidth = window.innerWidth;
+        let lastHeight = window.innerHeight;
+        
         window.addEventListener('resize', () => {
-            this.resize();
-        });
+            clearTimeout(resizeTimeout);
+            
+            const currentWidth = window.innerWidth;
+            const currentHeight = window.innerHeight;
+            
+            // Only resize if dimensions changed significantly
+            // This prevents canvas reset when mobile browser UI shows/hides
+            const widthChanged = Math.abs(currentWidth - lastWidth) > 50;
+            const heightChanged = Math.abs(currentHeight - lastHeight) > 100;
+            
+            if (widthChanged || heightChanged) {
+                resizeTimeout = setTimeout(() => {
+                    this.resize();
+                    lastWidth = currentWidth;
+                    lastHeight = currentHeight;
+                }, 100);
+            }
+        }, { passive: true });
     }
 }
 

@@ -3,7 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO -->
     <title>Mattia Casarotto — Multimedia Designer</title>
+    <meta name="description" content="Mattia Casarotto design and multimedia — have a look at my portfolio">
+    <meta name="author" content="Mattia Casarotto">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="alternate icon" href="favicon.ico">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mttcsr.com/">
+    <meta property="og:title" content="Mattia Casarotto — Multimedia Designer">
+    <meta property="og:description" content="Mattia Casarotto design and multimedia — have a look at my portfolio">
+    <meta property="og:image" content="https://mttcsr.com/og-image.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mttcsr.com/">
+    <meta property="twitter:title" content="Mattia Casarotto — Multimedia Designer">
+    <meta property="twitter:description" content="Mattia Casarotto design and multimedia — have a look at my portfolio">
+    <meta property="twitter:image" content="https://mttcsr.com/og-image.jpg">
+    
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400&display=swap" as="style">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,14 +40,18 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Skip to main content for keyboard navigation -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- Loader Overlay -->
-    <div id="loader-overlay" class="loader-overlay" aria-hidden="true">
-        <div class="loader-grid" role="img" aria-label="loading">
+    <div id="loader-overlay" class="loader-overlay" aria-hidden="true" role="status" aria-live="polite">
+        <div class="loader-grid" role="img" aria-label="Loading page content">
             <!-- 8x8 cells will be injected by loader.js -->
         </div>
     </div>
+
     <!-- Hero Section -->
-    <section class="hero-wrapper">
+    <header class="hero-wrapper">
         <div class="hero-content">
             <div class="hero-header">
                 <h1 class="hero-name">Mattia Casarotto</h1>
@@ -30,77 +59,84 @@
             </div>
             
             <!-- Canvas Container -->
-            <div class="canvas-container">
-                <canvas id="bg-canvas"></canvas>
+            <div class="canvas-container" role="img" aria-label="Interactive background pattern">
+                <canvas id="bg-canvas" aria-hidden="true"></canvas>
             </div>
             
             <!-- About -->
-            <div class="about-section">
-                <h2 class="about-title">About</h2>
+            <section class="about-section" aria-labelledby="about-heading">
+                <h2 id="about-heading" class="about-title">About</h2>
                 <p class="about-text">I'm Mattia, a multimedia designer. Big on sci-fi, videogames, and a storyteller at heart, I try to blend all this into my design work. To me, design is about striking a balance: an understanding of the problem, pushing creative boundaries, and delivering more than just a solution.</p>
-            </div>
+            </section>
 
             <!-- Scroll Indicator -->
-            <div class="scroll-indicator">
+            <div class="scroll-indicator" aria-hidden="true">
                 <span class="scroll-text">see more</span>
-                <svg class="scroll-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <svg class="scroll-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M8 3L8 13M8 13L12 9M8 13L4 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
         </div>
-    </section>
+    </header>
 
     <!-- Projects Container -->
-    <main class="projects-container">
+    <main id="main-content" class="projects-container">
         <!-- Project 1 -->
-        <section class="project-section" data-project-folder="01-intelligence-on-demand">
+        <section class="project-section" data-project-folder="01-intelligence-on-demand" aria-labelledby="project-1-title">
             <div class="project-content">
-                <h3 class="project-title">Loading...</h3>
-                <div class="project-gallery"></div>
+                <h2 id="project-1-title" class="project-title">Loading...</h2>
+                <div class="project-gallery" role="region" aria-label="Project media gallery">
+                    <!-- Media will be loaded here -->
+                </div>
                 <p class="project-description">Loading project details...</p>
             </div>
         </section>
 
         <!-- Project 2 -->
-        <section class="project-section" data-project-folder="02-reel">
+        <section class="project-section" data-project-folder="02-reel" aria-labelledby="project-2-title">
             <div class="project-content">
-                <h3 class="project-title">Loading...</h3>
-                <div class="project-gallery"></div>
+                <h2 id="project-2-title" class="project-title">Loading...</h2>
+                <div class="project-gallery" role="region" aria-label="Project media gallery">
+                    <!-- Media will be loaded here -->
+                </div>
                 <p class="project-description">Loading project details...</p>
             </div>
         </section>
 
         <!-- Project 3 -->
-        <section class="project-section" data-project-folder="03-off-track">
+        <section class="project-section" data-project-folder="03-off-track" aria-labelledby="project-3-title">
             <div class="project-content">
-                <h3 class="project-title">Loading...</h3>
-                <div class="project-gallery"></div>
+                <h2 id="project-3-title" class="project-title">Loading...</h2>
+                <div class="project-gallery" role="region" aria-label="Project media gallery">
+                    <!-- Media will be loaded here -->
+                </div>
                 <p class="project-description">Loading project details...</p>
             </div>
         </section>
 
         <!-- CTA Section -->
-        <section class="cta-section">
+        <section class="cta-section" aria-labelledby="cta-heading">
             <div class="cta-content">
-                <h2 class="cta-title">Want to see more?</h2>
+                <h2 id="cta-heading" class="cta-title">Want to see more?</h2>
                 <p class="cta-text">Drop me a line to see the complete portfolio and discuss potential collaborations.</p>
-                <a href="mailto:mttcsr@gmail.com" class="cta-button">Get in touch</a>
+                <a href="mailto:mttcsr@gmail.com" class="cta-button" aria-label="Send email to Mattia Casarotto">Get in touch</a>
             </div>
         </section>
     </main>
 
     <!-- Fixed Footer -->
-    <footer class="fixed-footer">
-        <div class="contact-links">
-            <a href="https://instagram.com/mttcsr" target="_blank">instagram</a>
-            <span class="separator">|</span>
-            <a href="https://www.linkedin.com/in/mattia-casarotto/" target="_blank">linkedin</a>
-            <span class="separator">|</span>
-            <a href="mailto:mttcsr@gmail.com">email</a>
-        </div>
+    <footer class="fixed-footer" role="contentinfo">
+        <nav class="contact-links" aria-label="Social media and contact links">
+            <a href="https://instagram.com/mttcsr" target="_blank" rel="noopener noreferrer" aria-label="Visit Mattia Casarotto on Instagram (opens in new tab)">instagram</a>
+            <span class="separator" aria-hidden="true">|</span>
+            <a href="https://www.linkedin.com/in/mattia-casarotto/" target="_blank" rel="noopener noreferrer" aria-label="Visit Mattia Casarotto on LinkedIn (opens in new tab)">linkedin</a>
+            <span class="separator" aria-hidden="true">|</span>
+            <a href="mailto:mttcsr@gmail.com" aria-label="Send email to Mattia Casarotto">email</a>
+        </nav>
     </footer>
 
     <!-- JavaScript -->
+    <script src="js/viewport.js"></script>
     <script src="js/loader.js"></script>
     <script src="js/canvas/background.js"></script>
     <script src="js/projects.js"></script>

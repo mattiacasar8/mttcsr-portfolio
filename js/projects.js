@@ -44,7 +44,7 @@ class ProjectLoader {
             if (descEl) descEl.textContent = description;
             
             // Load media files
-            await this.loadGalleryMedia(gallery, folder);
+            await this.loadGalleryMedia(gallery, folder, title);
             
         } catch (error) {
             console.error(`Error loading project ${folder}:`, error);
@@ -52,7 +52,7 @@ class ProjectLoader {
         }
     }
     
-    async loadGalleryMedia(gallery, folder) {
+    async loadGalleryMedia(gallery, folder, projectTitle) {
         // Only look for converted formats: webp (images) and webm (videos)
         const mediaExtensions = ['webp', 'webm'];
         const prefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
@@ -66,6 +66,7 @@ class ProjectLoader {
         track.className = 'gallery-track';
         
         let foundMedia = false;
+        let mediaIndex = 1;
         
         // Try to load numbered media files
         for (const prefix of prefixes) {
@@ -86,8 +87,9 @@ class ProjectLoader {
                         
                         // Only add if content type is correct (not HTML fallback)
                         if (isValidWebp || isValidWebm) {
-                            this.addMediaToTrack(track, path, ext);
+                            this.addMediaToTrack(track, path, ext, projectTitle, mediaIndex);
                             foundMedia = true;
+                            mediaIndex++;
                         } else {
                             console.log(`Skipping ${filename}: wrong content type (${contentType})`);
                         }
@@ -119,7 +121,7 @@ class ProjectLoader {
         gallery.appendChild(wrapper);
     }
     
-    addMediaToTrack(track, path, ext) {
+    addMediaToTrack(track, path, ext, projectTitle, mediaIndex) {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         
@@ -134,6 +136,7 @@ class ProjectLoader {
             video.playsInline = true;
             video.autoplay = true;
             video.volume = 0;
+            video.setAttribute('aria-label', `${projectTitle} - video ${mediaIndex}`);
             item.appendChild(video);
             
             // Ensure it plays
@@ -141,7 +144,9 @@ class ProjectLoader {
         } else {
             const img = document.createElement('img');
             img.src = path;
-            img.alt = '';
+            img.alt = `${projectTitle} - image ${mediaIndex}`;
+            img.loading = 'lazy';
+            img.decoding = 'async';
             item.appendChild(img);
         }
         
@@ -170,6 +175,8 @@ class ProjectLoader {
                 font-size: 0.875rem;
             `;
             placeholder.textContent = `Media ${i + 1}`;
+            placeholder.setAttribute('role', 'img');
+            placeholder.setAttribute('aria-label', `Placeholder media ${i + 1}`);
             
             item.appendChild(placeholder);
             track.appendChild(item);

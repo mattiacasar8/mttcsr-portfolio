@@ -19,6 +19,42 @@
     /* Typography */
     --font-serif: "Instrument Serif", serif;
     --font-sans: "Inter", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    /* Stable viewport (set by viewport.js) */
+    --vh: 1vh;
+    --gallery-height: calc(var(--vh, 1vh) * 33);
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+/* Skip link for keyboard navigation */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--white-100);
+    color: var(--bg-primary);
+    padding: var(--space-8) var(--space-16);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    z-index: 10000;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 /* Loader Overlay */
@@ -73,7 +109,7 @@ body {
    HERO SECTION
    ======================================== */
 .hero-wrapper {
-    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     width: 100%;
 }
 
@@ -221,9 +257,12 @@ body {
     transition: color 0.2s ease;
 }
 
-.contact-links a:hover {
+.contact-links a:hover,
+.contact-links a:focus {
     color: var(--white-100);
     text-decoration: underline;
+    outline: 2px solid var(--white-80);
+    outline-offset: 4px;
 }
 
 .separator {
@@ -277,7 +316,7 @@ body {
    ======================================== */
 .project-gallery {
     width: 100%;
-    height: 33vh;
+    height: var(--gallery-height);
     overflow-x: auto;
     overflow-y: hidden;
     position: relative;
@@ -313,7 +352,7 @@ body {
 
 .gallery-item {
     flex-shrink: 0;
-    height: 33vh;
+    height: var(--gallery-height);
     display: flex;
     align-items: center;
 }
@@ -324,6 +363,11 @@ body {
     width: auto;
     object-fit: contain;
     display: block;
+}
+
+/* Lazy loading optimization */
+.gallery-item img {
+    content-visibility: auto;
 }
 
 @keyframes marquee {
@@ -376,10 +420,13 @@ body {
     align-self: flex-start;
 }
 
-.cta-button:hover {
+.cta-button:hover,
+.cta-button:focus {
     background: var(--white-100);
     color: var(--bg-primary);
     border-color: var(--white-100);
+    outline: 2px solid var(--white-80);
+    outline-offset: 4px;
 }
 
 /* ========================================
@@ -406,11 +453,6 @@ body {
 
     .project-section {
         padding: var(--space-24) 24px;
-    }
-
-    .project-gallery,
-    .gallery-item {
-        height: 33vh;
     }
 
     .cta-section {
