@@ -1,4 +1,4 @@
-// Projects loader - simplified with CSS-based infinite scroll
+// Projects loader - Adaptive infinite scroll (duplicates based on content width)
 class ProjectLoader {
     constructor() {
         this.projects = document.querySelectorAll('.project-section[data-project-folder]');
@@ -18,7 +18,7 @@ class ProjectLoader {
     
     async loadProject(section, folder) {
         try {
-            // Try to read info.txt using fetch
+            // Load info.txt
             const infoPath = `assets/projects/${folder}/info.txt`;
             let title = folder.replace(/^\d+-/, '').replace(/-/g, ' ');
             let description = 'Project description';
@@ -43,25 +43,23 @@ class ProjectLoader {
             if (titleEl) titleEl.textContent = title;
             if (descEl) descEl.textContent = description;
             
-            // Load media files
+            // Load media
             await this.loadGalleryMedia(gallery, folder, title);
             
         } catch (error) {
             console.error(`Error loading project ${folder}:`, error);
-            this.createDummyGallery(section.querySelector('.project-gallery'));
         }
     }
     
     async loadGalleryMedia(gallery, folder, projectTitle) {
-        // Only look for converted formats: webp (images) and webm (videos)
         const mediaExtensions = ['webp', 'webm'];
         const prefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
         
-        // Create wrapper that will contain both tracks
+        // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.className = 'gallery-wrapper';
         
-        // Create first track
+        // Create main track
         const track = document.createElement('div');
         track.className = 'gallery-track';
         
@@ -75,53 +73,72 @@ class ProjectLoader {
                 const path = `assets/projects/${folder}/${filename}`;
                 
                 try {
-                    // Check if file exists AND has correct Content-Type
+                    // HEAD check for Cloudflare fallback detection
                     const response = await fetch(path, { method: 'HEAD' });
                     
                     if (response.ok) {
                         const contentType = response.headers.get('Content-Type') || '';
-                        
-                        // Verify the content type matches the file extension
                         const isValidWebp = ext === 'webp' && contentType.includes('image/webp');
                         const isValidWebm = ext === 'webm' && contentType.includes('video/webm');
                         
-                        // Only add if content type is correct (not HTML fallback)
                         if (isValidWebp || isValidWebm) {
-                            this.addMediaToTrack(track, path, ext, projectTitle, mediaIndex);
+                            this.createGalleryItem(track, path, ext, projectTitle, mediaIndex);
                             foundMedia = true;
                             mediaIndex++;
-                        } else {
-                            console.log(`Skipping ${filename}: wrong content type (${contentType})`);
                         }
                     }
                 } catch (e) {
-                    // File doesn't exist or network error, continue
+                    // File doesn't exist, continue
                 }
             }
         }
         
         if (!foundMedia) {
             console.log(`No media files found for ${folder}, creating dummy content`);
-            this.createDummyTrack(track);
+            this.createDummyItems(track, 5);
         }
         
-        // Clone the track for seamless infinite loop
-        const trackClone = track.cloneNode(true);
+        // Add track temporarily to measure width
+        const tempWrapper = document.createElement('div');
+        tempWrapper.style.cssText = 'display: flex; gap: 16px; position: absolute; visibility: hidden;';
+        tempWrapper.appendChild(track);
+        gallery.appendChild(tempWrapper);
         
-        // Start all videos in the clone too
-        trackClone.querySelectorAll('video').forEach(v => {
-            v.play().catch(() => {});
-        });
-        
-        // Add both tracks to wrapper
-        wrapper.appendChild(track);
-        wrapper.appendChild(trackClone);
-        
-        // Add wrapper to gallery
-        gallery.appendChild(wrapper);
+        // Wait for content to load and measure
+        setTimeout(() => {
+            const viewportWidth = gallery.offsetWidth;
+            const trackWidth = track.scrollWidth;
+            
+            // Calculate how many copies needed to fill at least viewport * 3
+            const minTotalWidth = viewportWidth * 3;
+            const copiesNeeded = Math.max(3, Math.ceil(minTotalWidth / trackWidth));
+            
+            console.log(`Gallery ${folder}: viewport=${viewportWidth}px, track=${trackWidth}px, copies=${copiesNeeded}`);
+            
+            // Remove temp wrapper
+            gallery.removeChild(tempWrapper);
+            
+            // Create all copies
+            const centerIndex = Math.floor(copiesNeeded / 2);
+            for (let i = 0; i < copiesNeeded; i++) {
+                const clone = track.cloneNode(true);
+                if (i !== centerIndex) {
+                    clone.setAttribute('aria-hidden', 'true');
+                }
+                wrapper.appendChild(clone);
+            }
+            
+            gallery.appendChild(wrapper);
+            
+            // Setup infinite scroll with adaptive parameters
+            this.setupInfiniteScroll(gallery, wrapper, trackWidth, copiesNeeded);
+            
+            // Setup video lifecycle
+            this.setupVideoObserver(gallery);
+        }, 300);
     }
     
-    addMediaToTrack(track, path, ext, projectTitle, mediaIndex) {
+    createGalleryItem(track, path, ext, projectTitle, mediaIndex) {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         
@@ -134,13 +151,10 @@ class ProjectLoader {
             video.setAttribute('muted', '');
             video.loop = true;
             video.playsInline = true;
-            video.autoplay = true;
             video.volume = 0;
+            video.preload = 'metadata';
             video.setAttribute('aria-label', `${projectTitle} - video ${mediaIndex}`);
             item.appendChild(video);
-            
-            // Ensure it plays
-            video.play().catch(() => {});
         } else {
             const img = document.createElement('img');
             img.src = path;
@@ -153,12 +167,10 @@ class ProjectLoader {
         track.appendChild(item);
     }
     
-    createDummyTrack(track) {
-        // Create dummy content for demonstration
-        const dummyCount = 5;
+    createDummyItems(track, count) {
         const colors = ['#1a1a1a', '#2a2a2a', '#3a3a3a', '#2a2a2a', '#1a1a1a'];
         
-        for (let i = 0; i < dummyCount; i++) {
+        for (let i = 0; i < count; i++) {
             const item = document.createElement('div');
             item.className = 'gallery-item';
             
@@ -166,7 +178,7 @@ class ProjectLoader {
             placeholder.style.cssText = `
                 width: 60vw;
                 height: 100%;
-                background: ${colors[i]};
+                background: ${colors[i % colors.length]};
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -183,20 +195,129 @@ class ProjectLoader {
         }
     }
     
-    createDummyGallery(gallery) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'gallery-wrapper';
+    setupInfiniteScroll(gallery, wrapper, singleTrackWidth, totalCopies) {
+        // Read actual CSS gap from wrapper to avoid drift with hardcoded values
+        const computedGap = parseFloat(getComputedStyle(wrapper).gap) || 16;
+        const trackWidth = singleTrackWidth + computedGap;
+        const centerIndex = Math.floor(totalCopies / 2);
+
+        // Start at center track
+        gallery.scrollLeft = trackWidth * centerIndex;
+
+        let isPaused = false;
+        let animationId = null;
+        let interactionTimeout = null;
+        let edgeDebounceTimeout = null;
+        let autoDirection = 1; // 1: right, -1: left
+        let lastScrollLeft = gallery.scrollLeft;
+
+        const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        // Autoscroll function
+        const scroll = () => {
+            if (!isPaused && isDesktop) {
+                gallery.scrollLeft += 0.5 * autoDirection;
+            }
+            animationId = requestAnimationFrame(scroll);
+        };
+
+        // Seamless edge wrapping (preserve relative offset instead of jumping to center)
+        const wrapIfAtEdges = () => {
+            const scrollPos = gallery.scrollLeft;
+            const maxScroll = trackWidth * (totalCopies - 1);
+            const threshold = 10;
+
+            // Too far right → shift left by one track width
+            if (scrollPos >= maxScroll - threshold) {
+                gallery.scrollLeft = scrollPos - trackWidth;
+                return;
+            }
+            // Too far left → shift right by one track width
+            if (scrollPos <= threshold) {
+                gallery.scrollLeft = scrollPos + trackWidth;
+            }
+        };
+
+        // Hover pause (desktop only)
+        if (isDesktop) {
+            gallery.addEventListener('mouseenter', () => {
+                isPaused = true;
+            });
+            gallery.addEventListener('mouseleave', () => {
+                isPaused = false;
+            });
+            // Start autoscroll
+            scroll();
+        }
+
+        // Pause autoscroll during user interaction and resume after idle
+        const pauseForInteraction = (resumeDelay = 400) => {
+            isPaused = true;
+            clearTimeout(interactionTimeout);
+            interactionTimeout = setTimeout(() => {
+                isPaused = false;
+            }, resumeDelay);
+        };
+
+        // Treat common interaction sources as user intent
+        gallery.addEventListener('wheel', (e) => {
+            if (e.deltaX < 0) autoDirection = -1;
+            else if (e.deltaX > 0) autoDirection = 1;
+            pauseForInteraction(800);
+        }, { passive: true });
+        gallery.addEventListener('touchstart', () => pauseForInteraction(), { passive: true });
+        gallery.addEventListener('touchmove', () => pauseForInteraction(800), { passive: true });
+        gallery.addEventListener('pointerdown', () => pauseForInteraction());
+        gallery.addEventListener('pointermove', () => pauseForInteraction(800));
+        gallery.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') { autoDirection = -1; pauseForInteraction(800); }
+            else if (e.key === 'ArrowRight') { autoDirection = 1; pauseForInteraction(800); }
+        });
+
+        // Handle manual scroll with debounced edge wrap
+        gallery.addEventListener('scroll', () => {
+            const current = gallery.scrollLeft;
+            const delta = current - lastScrollLeft;
+            if (delta < 0) autoDirection = -1;
+            else if (delta > 0) autoDirection = 1;
+            lastScrollLeft = current;
+            pauseForInteraction(600);
+            clearTimeout(edgeDebounceTimeout);
+            edgeDebounceTimeout = setTimeout(wrapIfAtEdges, 50);
+        });
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (animationId) cancelAnimationFrame(animationId);
+            clearTimeout(interactionTimeout);
+            clearTimeout(edgeDebounceTimeout);
+        });
+    }
+    
+    setupVideoObserver(gallery) {
+        const options = {
+            root: gallery,
+            rootMargin: '100px',
+            threshold: 0.1
+        };
         
-        const track = document.createElement('div');
-        track.className = 'gallery-track';
-        this.createDummyTrack(track);
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const video = entry.target.querySelector('video');
+                if (video) {
+                    if (entry.isIntersecting) {
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                    }
+                }
+            });
+        }, options);
         
-        const trackClone = track.cloneNode(true);
-        
-        wrapper.appendChild(track);
-        wrapper.appendChild(trackClone);
-        
-        gallery.appendChild(wrapper);
+        // Observe all gallery items
+        gallery.querySelectorAll('.gallery-item').forEach(item => {
+            observer.observe(item);
+        });
     }
     
     parseInfo(content) {

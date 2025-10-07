@@ -313,7 +313,7 @@ body {
 }
 
 /* ========================================
-   GALLERY - CSS-only infinite scroll
+   GALLERY - Triple Buffer Infinite Scroll
    ======================================== */
 .project-gallery {
     width: 100%;
@@ -321,7 +321,6 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
     position: relative;
-    display: flex;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -330,30 +329,22 @@ body {
     display: none;
 }
 
-/* Container that holds both tracks side by side */
 .gallery-wrapper {
     display: flex;
     gap: var(--space-16);
-    animation: marquee 30s linear infinite;
-    will-change: transform;
-}
-
-/* On desktop with hover capability, pause on hover */
-@media (hover: hover) and (pointer: fine) {
-    .project-gallery:hover .gallery-wrapper {
-        animation-play-state: paused;
-    }
+    height: 100%;
 }
 
 .gallery-track {
     display: flex;
     gap: var(--space-16);
+    height: 100%;
     flex-shrink: 0;
 }
 
 .gallery-item {
     flex-shrink: 0;
-    height: var(--gallery-height);
+    height: 100%;
     display: flex;
     align-items: center;
 }
@@ -369,11 +360,6 @@ body {
 /* Lazy loading optimization */
 .gallery-item img {
     content-visibility: auto;
-}
-
-@keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(-100% - var(--space-16))); }
 }
 
 /* ========================================
