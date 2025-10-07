@@ -1,68 +1,19 @@
-// Projects loader and gallery autoscroll
+// Projects loader - simplified with CSS-based infinite scroll
 class ProjectLoader {
     constructor() {
         this.projects = document.querySelectorAll('.project-section[data-project-folder]');
-        this.scrollSpeed = 0.5; // pixels per frame
-        this.isHovering = new Map();
-        this.isUserScrolling = new Map();
-        this.scrollTimeouts = new Map();
-        this.originalWidths = new Map();
-        this.activeVideos = new Set();
-        this.maxActiveVideos = 4;
-        this.videoObserver = null;
-        
         this.init();
     }
     
     async init() {
-        // Setup video intersection observer FIRST so we can safely observe videos as we add them
-        this.setupVideoObserver();
-        
         // Load all projects
         for (const section of this.projects) {
             const folder = section.dataset.projectFolder;
             await this.loadProject(section, folder);
         }
-        
-        // Start autoscroll for all galleries
-        this.startAutoscroll();
 
-        // Notify that the site is ready (initial galleries prepared)
+        // Notify that the site is ready
         window.dispatchEvent(new Event('site:ready'));
-    }
-    
-    setupVideoObserver() {
-        // Observer to play/pause videos based on visibility
-        this.videoObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const video = entry.target;
-                
-                if (entry.isIntersecting) {
-                    // Video is visible, try to play if under limit
-                    if (this.activeVideos.size < this.maxActiveVideos) {
-                        video.play().catch(e => console.log('Video play prevented:', e));
-                        this.activeVideos.add(video);
-                    }
-                } else {
-                    // Video is not visible, pause it
-                    video.pause();
-                    this.activeVideos.delete(video);
-                }
-            });
-        }, {
-            root: null,
-            rootMargin: '50px',
-            threshold: 0.1
-        });
-
-        // Observe any videos that might already be in the DOM
-        document.querySelectorAll('.project-gallery video').forEach(video => {
-            try {
-                this.videoObserver.observe(video);
-            } catch (e) {
-                // noop
-            }
-        });
     }
     
     async loadProject(section, folder) {
@@ -92,7 +43,7 @@ class ProjectLoader {
             if (titleEl) titleEl.textContent = title;
             if (descEl) descEl.textContent = description;
             
-            // Load media files - try common filenames
+            // Load media files
             await this.loadGalleryMedia(gallery, folder);
             
         } catch (error) {
@@ -106,6 +57,14 @@ class ProjectLoader {
         const mediaExtensions = ['webp', 'webm'];
         const prefixes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
         
+        // Create wrapper that will contain both tracks
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gallery-wrapper';
+        
+        // Create first track
+        const track = document.createElement('div');
+        track.className = 'gallery-track';
+        
         let foundMedia = false;
         
         // Try to load numbered media files
@@ -117,7 +76,7 @@ class ProjectLoader {
                 try {
                     const response = await fetch(path, { method: 'HEAD' });
                     if (response.ok) {
-                        this.addMediaToGallery(gallery, path, ext);
+                        this.addMediaToTrack(track, path, ext);
                         foundMedia = true;
                     }
                 } catch (e) {
@@ -128,18 +87,30 @@ class ProjectLoader {
         
         if (!foundMedia) {
             console.log(`No media files found for ${folder}, creating dummy content`);
-            this.createDummyGallery(gallery);
-        } else {
-            // Clone items for infinite scroll
-            this.setupInfiniteScroll(gallery);
+            this.createDummyTrack(track);
         }
+        
+        // Clone the track for seamless infinite loop
+        const trackClone = track.cloneNode(true);
+        
+        // Start all videos in the clone too
+        trackClone.querySelectorAll('video').forEach(v => {
+            v.play().catch(() => {});
+        });
+        
+        // Add both tracks to wrapper
+        wrapper.appendChild(track);
+        wrapper.appendChild(trackClone);
+        
+        // Add wrapper to gallery
+        gallery.appendChild(wrapper);
     }
     
-    addMediaToGallery(gallery, path, ext) {
+    addMediaToTrack(track, path, ext) {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         
-        const isVideo = ['mp4', 'webm'].includes(ext.toLowerCase());
+        const isVideo = ext.toLowerCase() === 'webm';
         
         if (isVideo) {
             const video = document.createElement('video');
@@ -148,18 +119,12 @@ class ProjectLoader {
             video.setAttribute('muted', '');
             video.loop = true;
             video.playsInline = true;
+            video.autoplay = true;
             video.volume = 0;
-            // Don't autoplay - let observer handle it
             item.appendChild(video);
             
-            // Observe this video
-            if (this.videoObserver) {
-                try {
-                    this.videoObserver.observe(video);
-                } catch (e) {
-                    // noop
-                }
-            }
+            // Ensure it plays
+            video.play().catch(() => {});
         } else {
             const img = document.createElement('img');
             img.src = path;
@@ -167,10 +132,10 @@ class ProjectLoader {
             item.appendChild(img);
         }
         
-        gallery.appendChild(item);
+        track.appendChild(item);
     }
     
-    createDummyGallery(gallery) {
+    createDummyTrack(track) {
         // Create dummy content for demonstration
         const dummyCount = 5;
         const colors = ['#1a1a1a', '#2a2a2a', '#3a3a3a', '#2a2a2a', '#1a1a1a'];
@@ -194,90 +159,24 @@ class ProjectLoader {
             placeholder.textContent = `Media ${i + 1}`;
             
             item.appendChild(placeholder);
-            gallery.appendChild(item);
+            track.appendChild(item);
         }
-        
-        // Setup infinite scroll even for dummy content
-        this.setupInfiniteScroll(gallery);
     }
     
-    setupInfiniteScroll(gallery) {
-        // Get original items
-        const items = Array.from(gallery.querySelectorAll('.gallery-item'));
+    createDummyGallery(gallery) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'gallery-wrapper';
         
-        // Calculate original content width (before cloning)
-        let originalWidth = 0;
-        items.forEach(item => {
-            originalWidth += item.offsetWidth;
-        });
+        const track = document.createElement('div');
+        track.className = 'gallery-track';
+        this.createDummyTrack(track);
         
-        // Add gap spacing between items
-        const gap = 16; // matches CSS --space-16
-        originalWidth += gap * (items.length - 1);
+        const trackClone = track.cloneNode(true);
         
-        // Store original width for this gallery
-        this.originalWidths.set(gallery, originalWidth);
+        wrapper.appendChild(track);
+        wrapper.appendChild(trackClone);
         
-        // Clone items multiple times for seamless infinite scroll
-        // Reduced from 10 to 4 for better performance
-        for (let i = 0; i < 4; i++) {
-            items.forEach(item => {
-                const clone = item.cloneNode(true);
-                
-                // Observe cloned videos too
-                const video = clone.querySelector('video');
-                if (video) {
-                    video.muted = true;
-                    video.setAttribute('muted', '');
-                    video.volume = 0;
-                    if (this.videoObserver) {
-                        try {
-                            this.videoObserver.observe(video);
-                        } catch (e) {
-                            // noop
-                        }
-                    }
-                }
-                
-                gallery.appendChild(clone);
-            });
-        }
-        
-        // Initialize user scrolling state
-        this.isUserScrolling.set(gallery, false);
-        
-        // Detect manual scrolling
-        gallery.addEventListener('wheel', () => {
-            this.isUserScrolling.set(gallery, true);
-            this.resetUserScrollingFlag(gallery);
-        }, { passive: true });
-        
-        gallery.addEventListener('touchmove', () => {
-            this.isUserScrolling.set(gallery, true);
-            this.resetUserScrollingFlag(gallery);
-        }, { passive: true });
-        
-        gallery.addEventListener('mousedown', () => {
-            this.isUserScrolling.set(gallery, true);
-        });
-        
-        gallery.addEventListener('mouseup', () => {
-            this.resetUserScrollingFlag(gallery);
-        });
-    }
-    
-    resetUserScrollingFlag(gallery) {
-        // Clear existing timeout
-        if (this.scrollTimeouts.has(gallery)) {
-            clearTimeout(this.scrollTimeouts.get(gallery));
-        }
-        
-        // Set new timeout to reset flag after user stops scrolling
-        const timeout = setTimeout(() => {
-            this.isUserScrolling.set(gallery, false);
-        }, 150);
-        
-        this.scrollTimeouts.set(gallery, timeout);
+        gallery.appendChild(wrapper);
     }
     
     parseInfo(content) {
@@ -286,7 +185,6 @@ class ProjectLoader {
         let description = '';
         
         if (lines.length > 0) {
-            // First line with # is title
             const firstLine = lines[0].trim();
             if (firstLine.startsWith('#')) {
                 title = firstLine.substring(1).trim();
@@ -298,47 +196,6 @@ class ProjectLoader {
         }
         
         return { title, description };
-    }
-    
-    startAutoscroll() {
-        const galleries = document.querySelectorAll('.project-gallery');
-        
-        galleries.forEach(gallery => {
-            // Initialize hover state
-            this.isHovering.set(gallery, false);
-            
-            // Add hover listeners
-            gallery.addEventListener('mouseenter', () => {
-                this.isHovering.set(gallery, true);
-            });
-            
-            gallery.addEventListener('mouseleave', () => {
-                this.isHovering.set(gallery, false);
-            });
-            
-            // Check if touch device
-            const isTouchDevice = 'ontouchstart' in window;
-            
-            if (!isTouchDevice) {
-                // Desktop: autoscroll with infinite loop
-                const originalWidth = this.originalWidths.get(gallery);
-                
-                const scroll = () => {
-                    // Only autoscroll if not hovering and user is not manually scrolling
-                    if (!this.isHovering.get(gallery) && !this.isUserScrolling.get(gallery)) {
-                        gallery.scrollLeft += this.scrollSpeed;
-                        
-                        // Reset seamlessly when reaching original width
-                        if (gallery.scrollLeft >= originalWidth) {
-                            gallery.scrollLeft = 0;
-                        }
-                    }
-                    
-                    requestAnimationFrame(scroll);
-                };
-                scroll();
-            }
-        });
     }
 }
 
