@@ -74,13 +74,26 @@ class ProjectLoader {
                 const path = `assets/projects/${folder}/${filename}`;
                 
                 try {
+                    // Check if file exists AND has correct Content-Type
                     const response = await fetch(path, { method: 'HEAD' });
+                    
                     if (response.ok) {
-                        this.addMediaToTrack(track, path, ext);
-                        foundMedia = true;
+                        const contentType = response.headers.get('Content-Type') || '';
+                        
+                        // Verify the content type matches the file extension
+                        const isValidWebp = ext === 'webp' && contentType.includes('image/webp');
+                        const isValidWebm = ext === 'webm' && contentType.includes('video/webm');
+                        
+                        // Only add if content type is correct (not HTML fallback)
+                        if (isValidWebp || isValidWebm) {
+                            this.addMediaToTrack(track, path, ext);
+                            foundMedia = true;
+                        } else {
+                            console.log(`Skipping ${filename}: wrong content type (${contentType})`);
+                        }
                     }
                 } catch (e) {
-                    // File doesn't exist, continue
+                    // File doesn't exist or network error, continue
                 }
             }
         }
