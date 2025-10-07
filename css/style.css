@@ -31,8 +31,9 @@
 /* Skip link for keyboard navigation */
 .skip-link {
     position: absolute;
-    top: -40px;
+    top: 0;
     left: 0;
+    transform: translateY(-200%);
     background: var(--white-100);
     color: var(--bg-primary);
     padding: var(--space-8) var(--space-16);
@@ -42,8 +43,8 @@
     z-index: 10000;
 }
 
-.skip-link:focus {
-    top: 0;
+.skip-link:focus-visible {
+    transform: translateY(0);
 }
 
 /* Reduce motion for users who prefer it */
