@@ -1,7 +1,7 @@
 /* ========================================
    VARIABLES
    ======================================== */
-:root {
+   :root {
     /* Colors */
     --bg-primary: #000000;
     --white-100: rgba(255, 255, 255, 1);
@@ -313,26 +313,36 @@ body {
 }
 
 /* ========================================
-   GALLERY - Triple Buffer Infinite Scroll
+   GALLERY - Transform-based Infinite Scroll
    ======================================== */
 .project-gallery {
     width: 100%;
     height: var(--gallery-height);
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: hidden; /* Changed from overflow-x: auto to hidden */
+    overflow-y: hidden; /* Prevent vertical scroll */
     position: relative;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    cursor: grab;
 }
 
-.project-gallery::-webkit-scrollbar {
-    display: none;
+.project-gallery:active {
+    cursor: grabbing;
+}
+
+/* Focus styles for keyboard navigation */
+.project-gallery:focus-visible {
+    outline: 2px solid var(--white-80);
+    outline-offset: 4px;
 }
 
 .gallery-wrapper {
     display: flex;
     gap: var(--space-16);
     height: 100%;
+    will-change: transform;
+    /* Hardware acceleration for smoother performance */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 .gallery-track {
@@ -347,6 +357,7 @@ body {
     height: 100%;
     display: flex;
     align-items: center;
+    position: relative;
 }
 
 .gallery-item img,
@@ -355,11 +366,29 @@ body {
     width: auto;
     object-fit: contain;
     display: block;
+    /* Optimize rendering */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 /* Lazy loading optimization */
 .gallery-item img {
     content-visibility: auto;
+}
+
+/* Loading placeholder animation */
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+.gallery-item-placeholder {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Video loading state */
+.gallery-item video {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 /* ========================================
@@ -448,5 +477,30 @@ body {
 
     .fixed-footer {
         padding: var(--space-8) 24px;
+    }
+    
+    /* Mobile-optimized gallery */
+    .project-gallery {
+        touch-action: pan-x;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .gallery-wrapper {
+        will-change: auto;
+    }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+    .contact-links a:focus,
+    .project-gallery:focus-visible,
+    .cta-button:focus {
+        outline-width: 3px;
     }
 }

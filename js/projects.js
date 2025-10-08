@@ -1,4 +1,4 @@
-// Projects loader - Adaptive infinite scroll (duplicates based on content width)
+// Projects loader - Optimized infinite scroll with transform
 class ProjectLoader {
     constructor() {
         this.projects = document.querySelectorAll('.project-section[data-project-folder]');
@@ -65,6 +65,20 @@ class ProjectLoader {
         
         let foundMedia = false;
         let mediaIndex = 1;
+        let totalMediaToLoad = 0;
+        let loadedMediaCount = 0;
+        
+        // Callback when a media loads
+        const onMediaLoaded = () => {
+            loadedMediaCount++;
+            if (loadedMediaCount === totalMediaToLoad) {
+                // All media loaded - do final calculation
+                setTimeout(() => {
+                    const event = new CustomEvent('allMediaLoaded', { bubbles: true });
+                    gallery.dispatchEvent(event);
+                }, 100);
+            }
+        };
         
         // Try to load numbered media files
         for (const prefix of prefixes) {
@@ -82,7 +96,8 @@ class ProjectLoader {
                         const isValidWebm = ext === 'webm' && contentType.includes('video/webm');
                         
                         if (isValidWebp || isValidWebm) {
-                            this.createGalleryItem(track, path, ext, projectTitle, mediaIndex);
+                            totalMediaToLoad++;
+                            this.createGalleryItem(track, path, ext, projectTitle, mediaIndex, onMediaLoaded);
                             foundMedia = true;
                             mediaIndex++;
                         }
@@ -98,51 +113,60 @@ class ProjectLoader {
             this.createDummyItems(track, 5);
         }
         
-        // Add track temporarily to measure width
-        const tempWrapper = document.createElement('div');
-        tempWrapper.style.cssText = 'display: flex; gap: 16px; position: absolute; visibility: hidden;';
-        tempWrapper.appendChild(track);
-        gallery.appendChild(tempWrapper);
+        // Clone the track once for seamless infinite scroll (2x total)
+        const clone = track.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        wrapper.appendChild(track);
+        wrapper.appendChild(clone);
+        
+        gallery.appendChild(wrapper);
         
         // Wait for content to load and measure
         setTimeout(() => {
-            const viewportWidth = gallery.offsetWidth;
-            const trackWidth = track.scrollWidth;
+            const singleTrackWidth = track.scrollWidth;
             
-            // Calculate how many copies needed to fill at least viewport * 3
-            const minTotalWidth = viewportWidth * 3;
-            const copiesNeeded = Math.max(3, Math.ceil(minTotalWidth / trackWidth));
+            console.log(`Gallery ${folder}: trackWidth=${singleTrackWidth}px`);
             
-            console.log(`Gallery ${folder}: viewport=${viewportWidth}px, track=${trackWidth}px, copies=${copiesNeeded}`);
-            
-            // Remove temp wrapper
-            gallery.removeChild(tempWrapper);
-            
-            // Create all copies
-            const centerIndex = Math.floor(copiesNeeded / 2);
-            for (let i = 0; i < copiesNeeded; i++) {
-                const clone = track.cloneNode(true);
-                if (i !== centerIndex) {
-                    clone.setAttribute('aria-hidden', 'true');
-                }
-                wrapper.appendChild(clone);
-            }
-            
-            gallery.appendChild(wrapper);
-            
-            // Setup infinite scroll with adaptive parameters
-            this.setupInfiniteScroll(gallery, wrapper, trackWidth, copiesNeeded);
+            // Setup infinite scroll with transform
+            this.setupInfiniteScroll(gallery, wrapper, track, singleTrackWidth);
             
             // Setup video lifecycle
             this.setupVideoObserver(gallery);
         }, 300);
     }
     
-    createGalleryItem(track, path, ext, projectTitle, mediaIndex) {
+    createGalleryItem(track, path, ext, projectTitle, mediaIndex, onMediaLoaded) {
         const item = document.createElement('div');
         item.className = 'gallery-item';
         
         const isVideo = ext.toLowerCase() === 'webm';
+        
+        // Add loading skeleton placeholder
+        const placeholder = document.createElement('div');
+        placeholder.className = 'gallery-item-placeholder';
+        placeholder.style.cssText = `
+            position: absolute;
+            inset: 0;
+            width: 60vw;
+            min-width: 300px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 1;
+        `;
+        
+        item.style.position = 'relative';
+        item.appendChild(placeholder);
+        
+        const removePlaceholderAndRecalc = () => {
+            placeholder.remove();
+            // Use requestAnimationFrame to ensure DOM has updated before recalculating
+            requestAnimationFrame(() => {
+                item.dispatchEvent(new CustomEvent('mediaLoaded', { bubbles: true }));
+                if (onMediaLoaded) onMediaLoaded();
+            });
+        };
         
         if (isVideo) {
             const video = document.createElement('video');
@@ -154,6 +178,22 @@ class ProjectLoader {
             video.volume = 0;
             video.preload = 'metadata';
             video.setAttribute('aria-label', `${projectTitle} - video ${mediaIndex}`);
+            
+            let loaded = false;
+            video.addEventListener('loadedmetadata', () => {
+                if (!loaded) {
+                    loaded = true;
+                    removePlaceholderAndRecalc();
+                }
+            });
+            
+            video.addEventListener('canplay', () => {
+                if (!loaded && placeholder.parentElement) {
+                    loaded = true;
+                    removePlaceholderAndRecalc();
+                }
+            });
+            
             item.appendChild(video);
         } else {
             const img = document.createElement('img');
@@ -161,6 +201,18 @@ class ProjectLoader {
             img.alt = `${projectTitle} - image ${mediaIndex}`;
             img.loading = 'lazy';
             img.decoding = 'async';
+            
+            img.addEventListener('load', () => {
+                removePlaceholderAndRecalc();
+            });
+            
+            img.addEventListener('error', () => {
+                console.error(`Failed to load image: ${path}`);
+                placeholder.style.background = 'rgba(255, 0, 0, 0.1)';
+                // Still count as loaded even if failed
+                if (onMediaLoaded) onMediaLoaded();
+            });
+            
             item.appendChild(img);
         }
         
@@ -195,103 +247,226 @@ class ProjectLoader {
         }
     }
     
-    setupInfiniteScroll(gallery, wrapper, singleTrackWidth, totalCopies) {
-        // Read actual CSS gap from wrapper to avoid drift with hardcoded values
-        const computedGap = parseFloat(getComputedStyle(wrapper).gap) || 16;
-        const trackWidth = singleTrackWidth + computedGap;
-        const centerIndex = Math.floor(totalCopies / 2);
-
-        // Start at center track
-        gallery.scrollLeft = trackWidth * centerIndex;
-
-        let isPaused = false;
+    setupInfiniteScroll(gallery, wrapper, track, initialTrackWidth) {
+        // Configuration
+        const speed = 30; // pixels per second
+        
+        // State
+        let singleTrackWidth = initialTrackWidth;
+        let computedGap = parseFloat(getComputedStyle(wrapper).gap) || 16;
+        let isPlaying = true;
+        let isHovered = false;
+        let currentPosition = 0;
         let animationId = null;
-        let interactionTimeout = null;
-        let edgeDebounceTimeout = null;
-        let autoDirection = 1; // 1: right, -1: left
-        let lastScrollLeft = gallery.scrollLeft;
-
+        let lastTimestamp = null;
+        let isManuallyScrolling = false;
+        let manualScrollTimeout = null;
+        
+        // Device detection
         const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-        // Autoscroll function
-        const scroll = () => {
-            if (!isPaused && isDesktop) {
-                gallery.scrollLeft += 0.5 * autoDirection;
-            }
-            animationId = requestAnimationFrame(scroll);
-        };
-
-        // Seamless edge wrapping (preserve relative offset instead of jumping to center)
-        const wrapIfAtEdges = () => {
-            const scrollPos = gallery.scrollLeft;
-            const maxScroll = trackWidth * (totalCopies - 1);
-            const threshold = 10;
-
-            // Too far right → shift left by one track width
-            if (scrollPos >= maxScroll - threshold) {
-                gallery.scrollLeft = scrollPos - trackWidth;
-                return;
-            }
-            // Too far left → shift right by one track width
-            if (scrollPos <= threshold) {
-                gallery.scrollLeft = scrollPos + trackWidth;
+        const isTouchDevice = 'ontouchstart' in window;
+        
+        // Track if we've recalculated on first interaction
+        let hasRecalculatedOnInteraction = false;
+        
+        const recalculateOnFirstInteraction = () => {
+            if (!hasRecalculatedOnInteraction) {
+                hasRecalculatedOnInteraction = true;
+                calculateDimensions();
             }
         };
-
-        // Hover pause (desktop only)
+        
+        // Function to recalculate dimensions on resize
+        const calculateDimensions = () => {
+            const oldWidth = singleTrackWidth;
+            singleTrackWidth = track.scrollWidth;
+            computedGap = parseFloat(getComputedStyle(wrapper).gap) || 16;
+            
+            // Adjust position proportionally if dimensions changed
+            if (oldWidth > 0 && oldWidth !== singleTrackWidth) {
+                const ratio = singleTrackWidth / oldWidth;
+                currentPosition *= ratio;
+                
+                // Ensure position is in valid range
+                const totalWidth = singleTrackWidth + computedGap;
+                while (currentPosition >= totalWidth) {
+                    currentPosition -= totalWidth;
+                }
+                while (currentPosition < 0) {
+                    currentPosition += totalWidth;
+                }
+                
+                updatePosition();
+            }
+        };
+        
+        // Setup resize observer
+        const setupResizeObserver = () => {
+            let resizeTimeout;
+            const handleResize = () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(calculateDimensions, 150);
+            };
+            
+            if (typeof ResizeObserver !== 'undefined') {
+                const resizeObserver = new ResizeObserver(handleResize);
+                resizeObserver.observe(gallery);
+                gallery._resizeObserver = resizeObserver;
+            } else {
+                window.addEventListener('resize', handleResize);
+            }
+        };
+        
+        // Animation loop with delta-time for smooth consistent speed
+        const animate = (timestamp) => {
+            if (!lastTimestamp) {
+                lastTimestamp = timestamp;
+            }
+            
+            const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
+            lastTimestamp = timestamp;
+            
+            // Auto-scroll only if playing, not hovered, and not manually scrolling
+            if (isPlaying && !isHovered && !isManuallyScrolling && isDesktop) {
+                currentPosition += speed * deltaTime;
+                checkPosition();
+                updatePosition();
+            }
+            
+            animationId = requestAnimationFrame(animate);
+        };
+        
+        // Seamless loop: reset position when reaching end of first set
+        const checkPosition = () => {
+            const totalWidth = singleTrackWidth + computedGap;
+            if (currentPosition >= totalWidth) {
+                currentPosition -= totalWidth;
+            } else if (currentPosition < 0) {
+                currentPosition += totalWidth;
+            }
+        };
+        
+        // Update wrapper position with transform
+        const updatePosition = () => {
+            wrapper.style.transform = `translateX(-${currentPosition}px)`;
+        };
+        
+        // Pause on hover (desktop only)
         if (isDesktop) {
             gallery.addEventListener('mouseenter', () => {
-                isPaused = true;
+                recalculateOnFirstInteraction();
+                isHovered = true;
             });
+            
             gallery.addEventListener('mouseleave', () => {
-                isPaused = false;
+                isHovered = false;
+                lastTimestamp = null; // Reset to avoid jump
             });
-            // Start autoscroll
-            scroll();
         }
-
-        // Pause autoscroll during user interaction and resume after idle
-        const pauseForInteraction = (resumeDelay = 400) => {
-            isPaused = true;
-            clearTimeout(interactionTimeout);
-            interactionTimeout = setTimeout(() => {
-                isPaused = false;
-            }, resumeDelay);
-        };
-
-        // Treat common interaction sources as user intent
+        
+        // Manual scroll handling with wheel
         gallery.addEventListener('wheel', (e) => {
-            if (e.deltaX < 0) autoDirection = -1;
-            else if (e.deltaX > 0) autoDirection = 1;
-            pauseForInteraction(800);
-        }, { passive: true });
-        gallery.addEventListener('touchstart', () => pauseForInteraction(), { passive: true });
-        gallery.addEventListener('touchmove', () => pauseForInteraction(800), { passive: true });
-        gallery.addEventListener('pointerdown', () => pauseForInteraction());
-        gallery.addEventListener('pointermove', () => pauseForInteraction(800));
+            e.preventDefault();
+            
+            recalculateOnFirstInteraction();
+            isManuallyScrolling = true;
+            clearTimeout(manualScrollTimeout);
+            
+            // Use deltaX if horizontal scroll, otherwise use deltaY and translate to horizontal
+            const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+            currentPosition += delta * 0.5;
+            checkPosition();
+            updatePosition();
+            
+            // Resume auto-scroll after idle
+            manualScrollTimeout = setTimeout(() => {
+                isManuallyScrolling = false;
+                lastTimestamp = null;
+            }, 800);
+        }, { passive: false });
+        
+        // Touch support for mobile
+        if (isTouchDevice) {
+            let touchStartX = 0;
+            let touchCurrentX = 0;
+            
+            gallery.addEventListener('touchstart', (e) => {
+                recalculateOnFirstInteraction();
+                touchStartX = e.touches[0].clientX;
+                isManuallyScrolling = true;
+                clearTimeout(manualScrollTimeout);
+            }, { passive: true });
+            
+            gallery.addEventListener('touchmove', (e) => {
+                touchCurrentX = e.touches[0].clientX;
+                const delta = touchStartX - touchCurrentX;
+                currentPosition += delta;
+                touchStartX = touchCurrentX;
+                checkPosition();
+                updatePosition();
+            }, { passive: true });
+            
+            gallery.addEventListener('touchend', () => {
+                manualScrollTimeout = setTimeout(() => {
+                    isManuallyScrolling = false;
+                    lastTimestamp = null;
+                }, 400);
+            }, { passive: true });
+        }
+        
+        // Keyboard navigation
+        gallery.setAttribute('tabindex', '0');
         gallery.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') { autoDirection = -1; pauseForInteraction(800); }
-            else if (e.key === 'ArrowRight') { autoDirection = 1; pauseForInteraction(800); }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                recalculateOnFirstInteraction();
+                isManuallyScrolling = true;
+                clearTimeout(manualScrollTimeout);
+                
+                const scrollAmount = e.key === 'ArrowLeft' ? -50 : 50;
+                currentPosition += scrollAmount;
+                checkPosition();
+                updatePosition();
+                
+                manualScrollTimeout = setTimeout(() => {
+                    isManuallyScrolling = false;
+                    lastTimestamp = null;
+                }, 800);
+            }
         });
-
-        // Handle manual scroll with debounced edge wrap
-        gallery.addEventListener('scroll', () => {
-            const current = gallery.scrollLeft;
-            const delta = current - lastScrollLeft;
-            if (delta < 0) autoDirection = -1;
-            else if (delta > 0) autoDirection = 1;
-            lastScrollLeft = current;
-            pauseForInteraction(600);
-            clearTimeout(edgeDebounceTimeout);
-            edgeDebounceTimeout = setTimeout(wrapIfAtEdges, 50);
+        
+        // Setup resize handling
+        setupResizeObserver();
+        
+        // Listen for media load events to recalculate dimensions
+        gallery.addEventListener('mediaLoaded', () => {
+            calculateDimensions();
         });
-
+        
+        // Listen for all media loaded event for final calculation
+        gallery.addEventListener('allMediaLoaded', () => {
+            console.log('All media loaded, final dimension calculation');
+            calculateDimensions();
+        });
+        
+        // Start animation
+        animationId = requestAnimationFrame(animate);
+        
         // Cleanup
-        window.addEventListener('beforeunload', () => {
-            if (animationId) cancelAnimationFrame(animationId);
-            clearTimeout(interactionTimeout);
-            clearTimeout(edgeDebounceTimeout);
-        });
+        const cleanup = () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            clearTimeout(manualScrollTimeout);
+            if (gallery._resizeObserver) {
+                gallery._resizeObserver.disconnect();
+            }
+        };
+        
+        window.addEventListener('beforeunload', cleanup);
+        
+        // Store cleanup function for potential future use
+        gallery._cleanupInfiniteScroll = cleanup;
     }
     
     setupVideoObserver(gallery) {
