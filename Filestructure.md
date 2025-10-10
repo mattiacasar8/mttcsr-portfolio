@@ -4,6 +4,8 @@
 mttcsr-portfolio/
 │
 ├── index.html                 # Main HTML structure
+├── favicon.svg               # Site favicon
+├── og-image.jpg              # Open Graph image
 │
 ├── css/
 │   ├── reset.css             # CSS reset
@@ -12,43 +14,53 @@ mttcsr-portfolio/
 ├── js/
 │   ├── main.js               # Main initialization
 │   ├── projects.js           # File-based CMS loader
+│   ├── loader.js             # Loading functionality
+│   ├── viewport.js           # Viewport utilities
 │   └── canvas/
 │       └── background.js     # Reaction-diffusion background
 │
 ├── assets/
-│   ├── projects/             # Project folders (file-based CMS)
-│   │   ├── 01-terna-vr/
-│   │   │   ├── info.txt      # #Title + description
-│   │   │   ├── 01-media.jpg  # Numbered media files
-│   │   │   ├── 02-media.mp4
-│   │   │   └── ...
-│   │   │
-│   │   ├── 02-eni-agri/
-│   │   │   └── ...
-│   │   │
-│   │   └── 03-chora/
-│   │       └── ...
-│   │
-│   └── reel/                 # Reel media (numbered files)
-│       ├── 01-video.mp4
-│       ├── 02-still.jpg
-│       └── ...
+│   ├── images/               # General images (empty)
+│   ├── videos/               # General videos (empty)
+│   └── projects/             # Project folders (file-based CMS)
+│       ├── 01-intelligence-on-demand/
+│       │   ├── info.txt      # #Title + description
+│       │   ├── 01-media.webp # Numbered media files
+│       │   ├── 02-media.webp
+│       │   ├── ...
+│       │   └── 10-media.webp
+│       │
+│       ├── 02-reel/
+│       │   ├── info.txt
+│       │   ├── 01-media.webm
+│       │   ├── 02-media.webp
+│       │   ├── ...
+│       │   └── 05-media.webm
+│       │
+│       └── 03-off-track/
+│           ├── info.txt
+│           ├── 01-media.webp
+│           ├── 02-media.webp
+│           ├── ...
+│           └── 06-media.webp
 │
-└── README.md                 # Documentation
+├── scripts/                  # Build/deployment scripts (empty)
+├── Filestructure.md          # This documentation file
+└── README.md                 # Project documentation
 
 ```
 
 ## File Naming Conventions
 
 ### Project Folders
-- Format: `XX-project-name/` (e.g., `01-terna-vr/`)
+- Format: `XX-project-name/` (e.g., `01-intelligence-on-demand/`)
 - Number prefix determines display order
 - Use lowercase and hyphens
 
 ### Media Files
-- Format: `XX-filename.ext` (e.g., `01-hero.jpg`)
+- Format: `XX-media.ext` (e.g., `01-media.webp`)
 - Number prefix determines order within gallery
-- Supported: `.jpg`, `.jpeg`, `.png`, `.gif`, `.mp4`, `.webm`
+- Supported: `.webp`, `.webm`, `.jpg`, `.jpeg`, `.png`, `.gif`, `.mp4`
 
 ### Info Files
 - Filename: `info.txt`
@@ -65,12 +77,12 @@ mttcsr-portfolio/
 1. **New Project**:
    - Create folder: `assets/projects/04-new-project/`
    - Add `info.txt`
-   - Add numbered media files
+   - Add numbered media files (e.g., `01-media.webp`, `02-media.webm`)
    - Add section in `index.html` with `data-project-folder="04-new-project"`
 
-2. **New Reel Media**:
-   - Add numbered files to `assets/reel/`
-   - Automatically loads on page refresh
+2. **Adding Media to Existing Projects**:
+   - Add numbered files to the project folder
+   - Files automatically load on page refresh
 
 ## How It Works
 
