@@ -54,7 +54,6 @@
 
   /* Stable viewport unit, set by the inline viewport script */
   --vh: 1vh;
-  --gallery-height: calc(var(--vh, 1vh) * 45);  /* project page strip */
   --hero-max-height: calc(var(--vh, 1vh) * 85); /* keeps portrait heroes within the viewport */
 
   /* Works grid (new) — WOA Studio mosaic values */
@@ -65,11 +64,15 @@
   --card-gap:         12px;
   --card-row-gap:     var(--space-32);   /* labels sit under the image */
 
+  /* Project gallery (new) — WOA Studio justified rows */
+  --gallery-item-height: 480px;
+  --gallery-item-min-w:  260px;
+  --gallery-gap:         12px;
+
   /* ── Motion ────────────────────────────────────────── */
   --duration-fast: 0.2s;
   --duration-base: 0.3s;
   --ease: ease;
-  --gallery-speed: 30;   /* px per second, gallery autoscroll */
 
   /* ── Focus ─────────────────────────────────────────── */
   --focus-width:  2px;
@@ -80,6 +83,12 @@
   --underline-offset-title: 4px;
 }
 
+@media (max-width: 1024px) {
+  :root {
+    --gallery-item-height: 38vw;
+  }
+}
+
 @media (max-width: 768px) {
   :root {
     --page-margin: var(--space-24);
@@ -87,7 +96,7 @@
     --text-h2: 1.25rem;
     --text-h3: 1rem;
     --card-height: 56vw;
-    --gallery-height: calc(var(--vh, 1vh) * 30);
+    --gallery-item-height: 56vw;
   }
 }
 

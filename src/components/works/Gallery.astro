@@ -1,0 +1,71 @@
+---
+import Media from '../ui/Media.astro';
+import type { ResolvedMedia } from '../../lib/media';
+
+interface Props {
+  items: ResolvedMedia[];
+  title: string;
+}
+
+// Justified rows (WOA Studio): fixed row height, each item grows in
+// proportion to its aspect ratio, clamped so extreme formats don't dominate.
+// Grow is normalised to >= 1 so an item alone on the last row still fills it
+// (a flex line with total grow < 1 leaves free space).
+const RATIO_MIN = 9 / 16;
+const RATIO_MAX = 16 / 9;
+
+const { items, title } = Astro.props;
+
+function ratioOf(media: ResolvedMedia): number | undefined {
+  const size = media.type === 'image' ? media.image : media.poster;
+  if (!size) return undefined;
+  return Math.min(RATIO_MAX, Math.max(RATIO_MIN, size.width / size.height)) / RATIO_MIN;
+}
+---
+
+{items.length > 0 && (
+  <section class="gallery" aria-label={`${title} — media gallery`}>
+    {items.map((media, i) => {
+      const ratio = ratioOf(media);
+      return (
+        <div class="gallery__item" style={ratio ? `flex-grow: ${ratio.toFixed(3)}` : undefined}>
+          <Media
+            media={media}
+            alt={`${title} — ${media.type} ${i + 1}`}
+            sizes="(max-width: 768px) 100vw, 50vw"
+            widths={[480, 960, 1440]}
+            autoplay={media.type === 'video'}
+          />
+        </div>
+      );
+    })}
+  </section>
+)}
+
+<style>
+  .gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gallery-gap);
+    padding: 0 var(--page-margin) var(--space-64);
+  }
+
+  .gallery__item {
+    flex: 1 0 var(--gallery-item-min-w);
+    height: var(--gallery-item-height);
+  }
+
+  .gallery__item :global(img),
+  .gallery__item :global(video) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    .gallery__item {
+      flex: none;
+      width: 100%;
+    }
+  }
+</style>

@@ -33,7 +33,7 @@ src/
 ├── components/
 │   ├── layout/              # BaseLayout, SiteHeader, Footer, Loader
 │   ├── home/HomeHero.astro  # name, nav, ASCII canvas, about
-│   ├── works/               # WorkCard, WorksGrid, GalleryStrip, MetaList, ProjectNav
+│   ├── works/               # WorkCard, WorksGrid, Gallery, MetaList, ProjectNav
 │   └── ui/                  # Nav, Media, Arrow
 ├── lib/                     # site config, media resolver, works helpers
 ├── scripts/                 # morpho-ascii.js (canvas), loader.js
@@ -69,7 +69,7 @@ Copy `src/content/works/_template.md` to `<slug>.md`, put the media in `src/asse
 | `text` | no | description, line breaks kept |
 | `context`, `award`, `role` | no | meta column on the project page |
 | `tags` | no | free text, shown on cards and project page |
-| `gallery` | no | list of `{ src, type }`, shown as the scrolling strip |
+| `gallery` | no | list of `{ src, type }`, justified rows on the project page |
 | `published` | no | defaults to `true` |
 
 Projects without `yearMonth` are listed after dated ones, alphabetically. Previous/next links follow the grid order and wrap around.

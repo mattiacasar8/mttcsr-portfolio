@@ -4,7 +4,7 @@ import BaseLayout from '../../components/layout/BaseLayout.astro';
 import SiteHeader from '../../components/layout/SiteHeader.astro';
 import Media from '../../components/ui/Media.astro';
 import MetaList from '../../components/works/MetaList.astro';
-import GalleryStrip from '../../components/works/GalleryStrip.astro';
+import Gallery from '../../components/works/Gallery.astro';
 import ProjectNav from '../../components/works/ProjectNav.astro';
 import { resolveMedia } from '../../lib/media';
 import { getWorks, neighbours, workYear, type Work } from '../../lib/works';
@@ -63,7 +63,7 @@ const meta = [
       {data.text && <p class="work-intro__text body-text">{data.text}</p>}
     </section>
 
-    <GalleryStrip items={gallery} title={data.title} />
+    <Gallery items={gallery} title={data.title} />
 
     <ProjectNav previous={previous} next={next} />
   </main>
