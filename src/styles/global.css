@@ -53,17 +53,27 @@ a {
 
 .label--subtle { color: var(--color-fg-subtle); }
 
-/* Inverted box: padding is cancelled by a negative margin so text stays aligned */
-.link,
+/* Interactive text: underline on hover */
+.link {
+  text-decoration: underline transparent;
+  text-underline-offset: var(--underline-offset);
+  transition: color var(--duration-fast) var(--ease), text-decoration-color var(--duration-fast) var(--ease);
+}
+
+.link:hover {
+  color: var(--color-fg);
+  text-decoration-color: currentColor;
+}
+
+/* Current section in the nav: inverted box; padding cancelled by margin so text stays aligned */
 .is-active {
   padding: var(--box-pad-y) var(--box-pad-x);
   margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
-  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+  background: var(--color-invert-bg);
+  color: var(--color-invert-fg);
 }
 
-.link:hover,
-.is-active {
-  background: var(--color-invert-bg);
+.is-active:hover {
   color: var(--color-invert-fg);
 }
 

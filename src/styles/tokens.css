@@ -74,6 +74,10 @@
   /* ── Focus ─────────────────────────────────────────── */
   --focus-width:  2px;
   --focus-offset: 4px;
+
+  /* ── Links ─────────────────────────────────────────── */
+  --underline-offset: 3px;
+  --underline-offset-title: 4px;
 }
 
 @media (max-width: 768px) {

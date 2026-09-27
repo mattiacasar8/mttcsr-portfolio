@@ -93,15 +93,14 @@ const links = [
     font-family: var(--font-serif);
     font-size: var(--text-h2);
     line-height: var(--leading-tight);
-    padding: var(--box-pad-y) var(--box-pad-x);
-    margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
-    transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+    text-decoration: underline transparent;
+    text-underline-offset: var(--underline-offset-title);
+    transition: text-decoration-color var(--duration-fast) var(--ease);
   }
 
   .project-nav__link:hover .project-nav__title,
   .project-nav__link:focus-visible .project-nav__title {
-    background: var(--color-invert-bg);
-    color: var(--color-invert-fg);
+    text-decoration-color: currentColor;
   }
 
   @media (max-width: 768px) {

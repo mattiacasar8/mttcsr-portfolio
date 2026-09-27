@@ -189,21 +189,19 @@ if (media.type === 'image') {
     gap: var(--space-16);
   }
 
-  /* Inverted box on hover; padding cancelled by margin so the title stays aligned */
   .work-card__title {
     font-family: var(--font-serif);
     font-size: var(--text-h3);
     font-weight: 400;
     line-height: var(--leading-tight);
-    padding: var(--box-pad-y) var(--box-pad-x);
-    margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
-    transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+    text-decoration: underline transparent;
+    text-underline-offset: var(--underline-offset-title);
+    transition: text-decoration-color var(--duration-fast) var(--ease);
   }
 
   .work-card__link:hover .work-card__title,
   .work-card__link:focus-visible .work-card__title {
-    background: var(--color-invert-bg);
-    color: var(--color-invert-fg);
+    text-decoration-color: currentColor;
   }
 
   @media (max-width: 768px) {
