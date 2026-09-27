@@ -48,6 +48,7 @@
   /* Stable viewport unit, set by the inline viewport script */
   --vh: 1vh;
   --gallery-height: calc(var(--vh, 1vh) * 45);  /* project page strip */
+  --hero-max-height: calc(var(--vh, 1vh) * 85); /* keeps portrait heroes within the viewport */
 
   /* Works grid (new) — WOA mosaic pattern */
   --card-height:      440px;

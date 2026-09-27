@@ -31,11 +31,13 @@ const VIDEO_BITRATE  = '1.5M';
 const VIDEO_MAXRATE  = '3M';
 const VIDEO_BUFSIZE  = '5M';
 const VIDEO_FPS      = 25;
+// Constrained quality: CRF sets quality, -b:v acts as a ceiling (plain -b:v overshoots with this libvpx build)
+const VIDEO_CRF      = 32;
 const PROXY_HEIGHT   = 480;
 const PROXY_BITRATE  = '500k';
 
 const SLUG_RE      = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const YEARMONTH_RE = /^\d{4}-\d{2}$/;
+const YEARMONTH_RE = /^\d{4}(-\d{2})?$/;
 
 const app = express();
 app.use(express.static(__dirname, { dotfiles: 'ignore' }));
@@ -109,6 +111,7 @@ const encodeClip = (job, inputPath, outputPath, opts = {}) => {
       .fps(fps || VIDEO_FPS)
       .outputOptions([
         '-vcodec libvpx-vp9',
+        `-crf ${VIDEO_CRF}`,
         `-b:v ${bitrate || VIDEO_BITRATE}`,
         `-maxrate ${maxrate || VIDEO_MAXRATE}`,
         `-bufsize ${VIDEO_BUFSIZE}`,
@@ -299,7 +302,7 @@ app.post('/api/save', upload.any(), async (req, res) => {
     const title = cleanText(body.title);
     if (!title) throw new Error('Titolo obbligatorio');
     const yearMonth = cleanText(body.yearMonth);
-    if (yearMonth && !YEARMONTH_RE.test(yearMonth)) throw new Error('Data non valida (formato YYYY-MM)');
+    if (yearMonth && !YEARMONTH_RE.test(yearMonth)) throw new Error('Data non valida (formato YYYY o YYYY-MM)');
     if (!originalSlug && fs.existsSync(mdPathFor(slug))) throw new Error(`Esiste già un progetto con slug "${slug}"`);
     if (originalSlug && originalSlug !== slug && fs.existsSync(mdPathFor(slug))) throw new Error(`Esiste già un progetto con slug "${slug}"`);
 

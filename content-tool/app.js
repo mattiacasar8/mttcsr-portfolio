@@ -242,7 +242,7 @@ async function openEdit(slug) {
     if (fm.yearMonth) {
       const [y, m] = String(fm.yearMonth).split('-');
       $('year').value = y;
-      $('month').value = m;
+      $('month').value = m || '';
     } else {
       $('year').value = '';
     }
@@ -300,7 +300,8 @@ function updateState() {
   state.subtitle = $('subtitle').value.trim();
   const year = $('year').value;
   $('month').disabled = !year;
-  state.yearMonth = year ? `${year}-${$('month').value}` : '';
+  const month = $('month').value;
+  state.yearMonth = year ? (month ? `${year}-${month}` : year) : '';
   state.text = $('text').value;
   state.context = $('context').value.trim();
   state.award = $('award').value.trim();

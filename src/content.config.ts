@@ -21,7 +21,8 @@ const workSchema = z.object({
   text: z.string().optional(),
 
   // Meta list
-  yearMonth: z.string().regex(/^\d{4}-\d{2}$/, 'Format must be YYYY-MM').optional(),
+  // YYYY or YYYY-MM
+  yearMonth: z.string().regex(/^\d{4}(-\d{2})?$/, 'Format must be YYYY or YYYY-MM').optional(),
   context: z.string().optional(),
   award: z.string().optional(),
   role: z.string().optional(),

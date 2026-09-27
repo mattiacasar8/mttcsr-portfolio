@@ -6,7 +6,7 @@ hero: hero.webp            # file in src/assets/works/<slug>/
 heroType: image            # image | video
 # cover: cover.webm        # optional card media for the works grid (defaults to hero)
 # coverType: video
-yearMonth: "2025-01"       # optional, YYYY-MM — used for ordering and the year label
+yearMonth: "2025"          # optional, YYYY or YYYY-MM — ordering and year label
 text: |-
   Project description. Line breaks are kept.
 context: Optional context (client, school, studio)

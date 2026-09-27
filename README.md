@@ -64,7 +64,7 @@ Copy `src/content/works/_template.md` to `<slug>.md`, put the media in `src/asse
 | `subtitle` | no | shown under the title on the project page |
 | `hero` / `heroType` | yes | `image` or `video` |
 | `cover` / `coverType` | no | card media in the grid; defaults to hero |
-| `yearMonth` | no | `YYYY-MM`; sorts the grid (newest first), year shown on cards |
+| `yearMonth` | no | `YYYY` or `YYYY-MM`; sorts the grid (newest first), year shown on cards |
 | `text` | no | description, line breaks kept |
 | `context`, `award`, `role` | no | meta column on the project page |
 | `tags` | no | free text, shown on cards and project page |
