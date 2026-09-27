@@ -1,0 +1,198 @@
+---
+import Media from '../ui/Media.astro';
+import type { ResolvedMedia } from '../../lib/media';
+
+interface Props {
+  items: ResolvedMedia[];
+  title: string;
+}
+
+const { items, title } = Astro.props;
+---
+
+{items.length > 0 && (
+  <section class="gallery" aria-label={`${title} — media gallery`} tabindex="0">
+    <div class="gallery__wrapper">
+      <div class="gallery__track">
+        {items.map((media, i) => (
+          <div class="gallery__item">
+            <Media
+              media={media}
+              alt={`${title} — ${media.type} ${i + 1}`}
+              sizes="(max-width: 768px) 80vw, 50vw"
+              widths={[480, 960, 1440]}
+              autoplay={media.type === 'video'}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<script>
+  // Infinite horizontal strip: autoscroll on desktop (pauses on hover),
+  // wheel / touch / arrow keys for manual scroll. Ported from the original site.
+  const WHEEL_FACTOR = 0.5;
+  const KEY_STEP = 50;
+  const RESUME_AFTER_WHEEL_MS = 800;
+  const RESUME_AFTER_TOUCH_MS = 400;
+  const RESIZE_DEBOUNCE_MS = 150;
+
+  function setupGallery(gallery: HTMLElement) {
+    const wrapper = gallery.querySelector<HTMLElement>('.gallery__wrapper');
+    const track = gallery.querySelector<HTMLElement>('.gallery__track');
+    if (!wrapper || !track) return;
+
+    // Clone the track once for a seamless loop
+    const clone = track.cloneNode(true) as HTMLElement;
+    clone.setAttribute('aria-hidden', 'true');
+    clone.querySelectorAll('img, video').forEach((el) => el.setAttribute('tabindex', '-1'));
+    wrapper.appendChild(clone);
+
+    const speed = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gallery-speed')) || 30;
+    const isDesktop = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let trackWidth = track.scrollWidth;
+    let gap = parseFloat(getComputedStyle(wrapper).columnGap) || 0;
+    let position = 0;
+    let lastTimestamp: number | null = null;
+    let isHovered = false;
+    let isManual = false;
+    let manualTimeout: ReturnType<typeof setTimeout> | undefined;
+
+    const loopWidth = () => trackWidth + gap;
+    const wrap = () => {
+      const total = loopWidth();
+      if (total <= 0) return;
+      position = ((position % total) + total) % total;
+    };
+    const render = () => { wrapper.style.transform = `translateX(-${position}px)`; };
+
+    const measure = () => {
+      const old = trackWidth;
+      trackWidth = track.scrollWidth;
+      gap = parseFloat(getComputedStyle(wrapper).columnGap) || 0;
+      if (old > 0 && old !== trackWidth) position *= trackWidth / old;
+      wrap();
+      render();
+    };
+
+    const manual = (delta: number, resumeMs: number) => {
+      isManual = true;
+      clearTimeout(manualTimeout);
+      position += delta;
+      wrap();
+      render();
+      manualTimeout = setTimeout(() => { isManual = false; lastTimestamp = null; }, resumeMs);
+    };
+
+    const animate = (timestamp: number) => {
+      if (lastTimestamp === null) lastTimestamp = timestamp;
+      const dt = (timestamp - lastTimestamp) / 1000;
+      lastTimestamp = timestamp;
+      if (isDesktop && !reducedMotion && !isHovered && !isManual) {
+        position += speed * dt;
+        wrap();
+        render();
+      }
+      requestAnimationFrame(animate);
+    };
+
+    if (isDesktop) {
+      gallery.addEventListener('mouseenter', () => { isHovered = true; });
+      gallery.addEventListener('mouseleave', () => { isHovered = false; lastTimestamp = null; });
+    }
+
+    gallery.addEventListener('wheel', (e) => {
+      const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (!delta) return;
+      e.preventDefault();
+      manual(delta * WHEEL_FACTOR, RESUME_AFTER_WHEEL_MS);
+    }, { passive: false });
+
+    let touchX = 0;
+    gallery.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, { passive: true });
+    gallery.addEventListener('touchmove', (e) => {
+      const x = e.touches[0].clientX;
+      manual(touchX - x, RESUME_AFTER_TOUCH_MS);
+      touchX = x;
+    }, { passive: true });
+
+    gallery.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      manual(e.key === 'ArrowLeft' ? -KEY_STEP : KEY_STEP, RESUME_AFTER_WHEEL_MS);
+    });
+
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
+    new ResizeObserver(() => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(measure, RESIZE_DEBOUNCE_MS);
+    }).observe(gallery);
+    gallery.querySelectorAll('img').forEach((img) => img.addEventListener('load', measure, { once: true }));
+    gallery.querySelectorAll('video').forEach((video) => video.addEventListener('loadedmetadata', measure, { once: true }));
+
+    // Play videos only while visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting) video.play().catch(() => {});
+        else video.pause();
+      });
+    }, { root: gallery, rootMargin: '100px', threshold: 0.1 });
+    gallery.querySelectorAll('video').forEach((video) => observer.observe(video));
+
+    requestAnimationFrame(animate);
+  }
+
+  document.querySelectorAll<HTMLElement>('.gallery').forEach(setupGallery);
+</script>
+
+<style>
+  .gallery {
+    height: var(--gallery-height);
+    overflow: hidden;
+    cursor: grab;
+    padding-left: var(--page-margin);
+  }
+
+  .gallery:active {
+    cursor: grabbing;
+  }
+
+  .gallery__wrapper,
+  .gallery__track {
+    display: flex;
+    gap: var(--grid-gap);
+    height: 100%;
+  }
+
+  .gallery__wrapper {
+    will-change: transform;
+  }
+
+  .gallery__track {
+    flex-shrink: 0;
+  }
+
+  .gallery__item {
+    flex-shrink: 0;
+    height: 100%;
+    background: var(--color-surface);
+  }
+
+  .gallery__item :global(img),
+  .gallery__item :global(video) {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+  }
+
+  @media (max-width: 768px) {
+    .gallery {
+      touch-action: pan-y;
+    }
+  }
+</style>

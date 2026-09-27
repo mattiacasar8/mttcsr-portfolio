@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import SiteHeader from '../../components/layout/SiteHeader.astro';
+import WorksGrid from '../../components/works/WorksGrid.astro';
+import { getWorks } from '../../lib/works';
+
+const works = await getWorks();
+---
+
+<BaseLayout title="Works">
+  <SiteHeader current="works" />
+
+  <main id="main-content" class="works-page">
+    <div class="works-page__head">
+      <h1 class="works-page__title">Works</h1>
+      <span class="label">{works.length} {works.length === 1 ? 'project' : 'projects'}</span>
+    </div>
+    <WorksGrid works={works} headingTag="h2" />
+  </main>
+</BaseLayout>
+
+<style>
+  .works-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+    padding: var(--space-32) var(--page-margin) var(--space-64);
+  }
+
+  .works-page__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-16);
+  }
+
+  .works-page__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-display);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+  }
+</style>

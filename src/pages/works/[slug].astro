@@ -1,0 +1,126 @@
+---
+import { getImage } from 'astro:assets';
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import SiteHeader from '../../components/layout/SiteHeader.astro';
+import Media from '../../components/ui/Media.astro';
+import MetaList from '../../components/works/MetaList.astro';
+import GalleryStrip from '../../components/works/GalleryStrip.astro';
+import ProjectNav from '../../components/works/ProjectNav.astro';
+import { resolveMedia } from '../../lib/media';
+import { getWorks, neighbours, workYear, type Work } from '../../lib/works';
+
+export async function getStaticPaths() {
+  const works = await getWorks();
+  return works.map((work) => ({ params: { slug: work.id }, props: { work, works } }));
+}
+
+interface Props {
+  work: Work;
+  works: Work[];
+}
+
+const OG_WIDTH = 1200;
+const DESCRIPTION_MAX = 160;
+
+const { work, works } = Astro.props;
+const { data } = work;
+
+const hero = resolveMedia(work.id, data.hero, data.heroType);
+const gallery = data.gallery.map((item) => resolveMedia(work.id, item.src, item.type));
+const { previous, next } = neighbours(works, work.id);
+
+const ogSource = hero.type === 'image' ? hero.image : hero.poster;
+const ogImage = ogSource
+  ? (await getImage({ src: ogSource, width: Math.min(OG_WIDTH, ogSource.width), format: 'jpg' })).src
+  : undefined;
+const description = data.subtitle ?? data.text?.replace(/\s+/g, ' ').slice(0, DESCRIPTION_MAX);
+
+const meta = [
+  { key: 'year', value: workYear(work) },
+  { key: 'context', value: data.context },
+  { key: 'award', value: data.award },
+  { key: 'role', value: data.role },
+  { key: 'tags', value: data.tags.join(' · '), accent: true },
+];
+---
+
+<BaseLayout title={data.title} description={description} image={ogImage}>
+  <SiteHeader current="works" />
+
+  <main id="main-content">
+    <div class="work-hero">
+      <Media media={hero} alt={data.title} sizes="100vw" loading="eager" autoplay />
+    </div>
+
+    <section class="work-intro">
+      <div class="work-intro__title">
+        <h1 class="work-intro__heading">{data.title}</h1>
+        {data.subtitle && <p class="work-intro__subtitle">{data.subtitle}</p>}
+      </div>
+      <div class="work-intro__meta">
+        <MetaList items={meta} />
+      </div>
+      {data.text && <p class="work-intro__text body-text">{data.text}</p>}
+    </section>
+
+    <GalleryStrip items={gallery} title={data.title} />
+
+    <ProjectNav previous={previous} next={next} />
+  </main>
+</BaseLayout>
+
+<style>
+  .work-hero {
+    padding: 0 var(--page-margin);
+  }
+
+  .work-hero :global(img),
+  .work-hero :global(video) {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Desktop: meta column left, title + description right */
+  .work-intro {
+    display: grid;
+    grid-template-columns: minmax(0, var(--meta-width)) minmax(0, var(--text-max));
+    grid-template-areas:
+      'meta title'
+      'meta text';
+    grid-template-rows: auto 1fr;
+    justify-content: space-between;
+    column-gap: var(--space-64);
+    row-gap: var(--space-24);
+    padding: var(--space-64) var(--page-margin);
+  }
+
+  .work-intro__title { grid-area: title; display: flex; flex-direction: column; gap: var(--space-8); }
+  .work-intro__meta { grid-area: meta; }
+  .work-intro__text { grid-area: text; }
+
+  .work-intro__heading {
+    font-family: var(--font-serif);
+    font-size: var(--text-display);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+  }
+
+  .work-intro__subtitle {
+    font-family: var(--font-serif);
+    font-size: var(--text-h3);
+    line-height: var(--leading-tight);
+    color: var(--color-fg-muted);
+  }
+
+  @media (max-width: 768px) {
+    .work-intro {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        'title'
+        'meta'
+        'text';
+      grid-template-rows: auto;
+      padding-block: var(--space-32);
+    }
+  }
+</style>

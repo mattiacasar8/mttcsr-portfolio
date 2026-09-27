@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import HomeHero from '../components/home/HomeHero.astro';
+import WorksGrid from '../components/works/WorksGrid.astro';
+import Arrow from '../components/ui/Arrow.astro';
+import { getWorks } from '../lib/works';
+import { site } from '../lib/site';
+
+const works = await getWorks();
+const selected = works.slice(0, site.homeWorksCount);
+---
+
+<BaseLayout showLoader>
+  <HomeHero />
+
+  <main id="main-content">
+    <section class="home-works" aria-labelledby="works-heading">
+      <div class="home-works__head">
+        <h2 id="works-heading" class="section-title">Selected works</h2>
+        <a class="label link home-works__all" href="/works/">all works ({works.length}) <Arrow direction="right" size={12} /></a>
+      </div>
+      <WorksGrid works={selected} headingTag="h3" />
+    </section>
+
+    <section class="cta" aria-labelledby="cta-heading">
+      <h2 id="cta-heading" class="section-title">Want to see more?</h2>
+      <p class="body-text">Drop me a line to see the complete portfolio and discuss potential collaborations.</p>
+      <a class="cta__button" href={`mailto:${site.email}`} aria-label={`Send email to ${site.name}`}>Get in touch</a>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .home-works {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding: var(--space-64) var(--page-margin) var(--space-32);
+  }
+
+  .home-works__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-16);
+  }
+
+  .home-works__all {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .cta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+    padding: var(--space-64) var(--page-margin);
+  }
+
+  .cta__button {
+    align-self: flex-start;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-button);
+    color: var(--color-fg);
+    padding: var(--space-16) var(--space-32);
+    border: 1px solid var(--color-fg-muted);
+    transition: background var(--duration-base) var(--ease), color var(--duration-base) var(--ease), border-color var(--duration-base) var(--ease);
+  }
+
+  .cta__button:hover,
+  .cta__button:focus-visible {
+    background: var(--color-fg);
+    color: var(--color-bg);
+    border-color: var(--color-fg);
+  }
+
+  @media (max-width: 768px) {
+    .home-works {
+      padding-top: var(--space-40);
+    }
+
+    .cta {
+      padding-block: var(--space-40);
+    }
+  }
+</style>

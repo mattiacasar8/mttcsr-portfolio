@@ -1,0 +1,50 @@
+---
+import { Image, getImage } from 'astro:assets';
+import type { ResolvedMedia } from '../../lib/media';
+
+interface Props {
+  media: ResolvedMedia;
+  alt: string;
+  sizes: string;
+  widths?: number[];
+  class?: string;
+  loading?: 'lazy' | 'eager';
+  /** Videos: autoplay in loop (hero, gallery). Otherwise they play on demand (cards). */
+  autoplay?: boolean;
+}
+
+const DEFAULT_WIDTHS = [480, 960, 1440, 1920];
+const POSTER_WIDTH = 1280;
+
+const { media, alt, sizes, widths = DEFAULT_WIDTHS, class: className, loading = 'lazy', autoplay = false } = Astro.props;
+
+const poster = media.type === 'video' && media.poster
+  ? await getImage({ src: media.poster, width: Math.min(POSTER_WIDTH, media.poster.width), format: 'webp' })
+  : undefined;
+---
+
+{media.type === 'image' ? (
+  <Image
+    src={media.image}
+    alt={alt}
+    widths={widths.filter((w) => w < media.image.width).concat(media.image.width)}
+    sizes={sizes}
+    loading={loading}
+    decoding="async"
+    class={className}
+  />
+) : (
+  <video
+    src={media.url}
+    poster={poster?.src}
+    width={media.poster?.width}
+    height={media.poster?.height}
+    muted
+    loop
+    playsinline
+    autoplay={autoplay}
+    preload={autoplay ? 'auto' : 'metadata'}
+    aria-label={alt || undefined}
+    class={className}
+  ></video>
+)}

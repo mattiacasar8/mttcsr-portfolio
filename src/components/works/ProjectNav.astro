@@ -1,0 +1,133 @@
+---
+import Media from '../ui/Media.astro';
+import Arrow from '../ui/Arrow.astro';
+import { resolveMedia } from '../../lib/media';
+import type { Work } from '../../lib/works';
+
+interface Props {
+  previous?: Work;
+  next?: Work;
+}
+
+const { previous, next } = Astro.props;
+
+const thumbFor = (work: Work) => {
+  const media = resolveMedia(work.id, work.data.cover ?? work.data.hero, work.data.coverType ?? work.data.heroType);
+  // Videos use their poster frame as a still thumbnail
+  if (media.type === 'video') return media.poster ? { type: 'image' as const, image: media.poster } : undefined;
+  return media;
+};
+
+const links = [
+  previous && { work: previous, label: 'previous project', dir: 'left' as const, thumb: thumbFor(previous) },
+  next && { work: next, label: 'next project', dir: 'right' as const, thumb: thumbFor(next) },
+].filter((link) => !!link);
+---
+
+{links.length > 0 && (
+  <nav class="project-nav" aria-label="Project navigation">
+    {links.map((link) => (
+      <a class:list={['project-nav__link', `project-nav__link--${link.dir}`]} href={`/works/${link.work.id}/`} rel={link.dir === 'left' ? 'prev' : 'next'}>
+        <Arrow direction={link.dir} size={24} />
+        {link.thumb && (
+          <Media media={link.thumb} alt="" sizes="160px" widths={[160, 320]} class="project-nav__thumb" />
+        )}
+        <span class="project-nav__text">
+          <span class="label">{link.label}</span>
+          <span class="project-nav__title">{link.work.data.title}</span>
+          {link.work.data.tags.length > 0 && <span class="label label--accent">{link.work.data.tags.join(' · ')}</span>}
+        </span>
+      </a>
+    ))}
+  </nav>
+)}
+
+<style>
+  .project-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin: var(--space-64) var(--page-margin);
+    border-block: 1px solid var(--color-line);
+  }
+
+  .project-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-24);
+    padding: var(--space-24) 0;
+  }
+
+  .project-nav__link--left {
+    padding-right: var(--space-24);
+    border-right: 1px solid var(--color-line);
+  }
+
+  /* Next: text, thumb, arrow — mirrored order */
+  .project-nav__link--right {
+    grid-column: 2;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    padding-left: var(--space-24);
+    text-align: right;
+  }
+
+  .project-nav__link--right .project-nav__text {
+    align-items: flex-end;
+  }
+
+  .project-nav__link :global(.project-nav__thumb) {
+    width: 160px;
+    height: 120px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .project-nav__text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .project-nav__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-h2);
+    line-height: var(--leading-tight);
+    text-decoration: underline transparent;
+    text-underline-offset: 4px;
+    transition: text-decoration-color var(--duration-fast) var(--ease);
+  }
+
+  .project-nav__link:hover .project-nav__title {
+    text-decoration-color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .project-nav {
+      grid-template-columns: minmax(0, 1fr);
+      border-bottom: 0;
+    }
+
+    .project-nav__link,
+    .project-nav__link--left,
+    .project-nav__link--right {
+      grid-column: 1;
+      padding-inline: 0;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-line);
+    }
+
+    .project-nav__link--right {
+      flex-direction: row-reverse;
+      justify-content: space-between;
+      text-align: left;
+    }
+
+    .project-nav__link--right .project-nav__text {
+      align-items: flex-start;
+    }
+
+    .project-nav__link :global(.project-nav__thumb) {
+      display: none;
+    }
+  }
+</style>

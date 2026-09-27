@@ -1,0 +1,37 @@
+---
+import Nav from '../ui/Nav.astro';
+import { site } from '../../lib/site';
+
+interface Props {
+  current?: 'works';
+}
+
+const { current } = Astro.props;
+---
+
+<header class="site-header">
+  <a class="site-header__name" href="/">{site.name}</a>
+  <Nav current={current} />
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-16);
+    padding: var(--space-32) var(--page-margin);
+  }
+
+  .site-header__name {
+    font-family: var(--font-serif);
+    font-size: var(--text-h2);
+    line-height: var(--leading-tight);
+  }
+
+  @media (max-width: 768px) {
+    .site-header {
+      padding-block: var(--space-24);
+    }
+  }
+</style>

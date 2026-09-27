@@ -1,0 +1,86 @@
+/*
+ * Design tokens — mttcsr.com (design system v0.1)
+ * Every visual value used by components lives here.
+ * "new" marks extensions added for the works section.
+ */
+
+:root {
+  /* ── Color ─────────────────────────────────────────── */
+  --color-bg:        #000000;
+  --color-fg:        rgba(255, 255, 255, 1);
+  --color-fg-muted:  rgba(255, 255, 255, 0.8);
+  --color-fg-subtle: rgba(255, 255, 255, 0.6);
+  --color-surface:   rgba(255, 255, 255, 0.05);
+  --color-line:      rgba(255, 255, 255, 0.2);   /* new: hairlines */
+  --color-accent:    #00aa00;                    /* new: canvas palette 2 "hacker" */
+  --footer-fade:     linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+
+  /* ── Typography ────────────────────────────────────── */
+  --font-serif: "Instrument Serif", serif;
+  --font-sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:  "Inter", monospace;
+
+  --text-display: 2.5rem;   /* name, project title */
+  --text-h2:      1.5rem;   /* section titles */
+  --text-h3:      1.25rem;  /* subtitles, card title */
+  --text-body:    1rem;
+  --text-button:  1rem;
+  --text-label:   0.75rem;  /* links, nav, meta, tags */
+  --text-skip:    0.875rem;
+
+  --leading-tight: 1.2;
+  --leading-body:  1.6;
+
+  /* ── Space (multiples of 8) ────────────────────────── */
+  --space-8:  8px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-64: 64px;
+
+  /* ── Layout ────────────────────────────────────────── */
+  --page-margin: var(--space-40);
+  --text-max:    800px;
+  --grid-gap:    var(--space-16);
+  --meta-width:  400px;                         /* new: project meta column */
+
+  /* Stable viewport unit, set by the inline viewport script */
+  --vh: 1vh;
+  --gallery-height: calc(var(--vh, 1vh) * 45);  /* project page strip */
+
+  /* Works grid (new) — WOA mosaic pattern */
+  --card-height:      440px;
+  --card-min-w:       400px;
+  --card-min-w-wide:  600px;
+  --card-max-w:       800px;
+  --card-max-w-wide:  1200px;
+  --card-grow-wide:   1.5;
+
+  /* ── Motion ────────────────────────────────────────── */
+  --duration-fast: 0.2s;
+  --duration-base: 0.3s;
+  --ease: ease;
+  --gallery-speed: 30;   /* px per second, gallery autoscroll */
+
+  /* ── Focus ─────────────────────────────────────────── */
+  --focus-width:  2px;
+  --focus-offset: 4px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --page-margin: var(--space-24);
+    --text-display: 2rem;
+    --text-h2: 1.25rem;
+    --text-h3: 1rem;
+    --card-height: 56vw;
+    --gallery-height: calc(var(--vh, 1vh) * 30);
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --focus-width: 3px;
+  }
+}

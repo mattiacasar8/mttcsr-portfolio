@@ -1,0 +1,215 @@
+---
+import { getImage } from 'astro:assets';
+import Media from '../ui/Media.astro';
+import { resolveMedia } from '../../lib/media';
+import { workYear, type Work } from '../../lib/works';
+
+interface Props {
+  work: Work;
+  wide?: boolean;
+  headingTag?: 'h2' | 'h3';
+}
+
+// Hover preview: cycle through the first gallery images
+const PREVIEW_COUNT = 3;
+const PREVIEW_WIDTH = 960;
+
+const { work, wide = false, headingTag: Heading = 'h3' } = Astro.props;
+const { data } = work;
+
+const cardFile = data.cover ?? data.hero;
+const cardType = data.coverType ?? data.heroType;
+const media = resolveMedia(work.id, cardFile, cardType);
+const year = workYear(work);
+
+const previews: string[] = [];
+if (media.type === 'image') {
+  const pool = data.gallery.filter((m) => m.type === 'image').slice(0, PREVIEW_COUNT);
+  for (const item of pool) {
+    const resolved = resolveMedia(work.id, item.src, 'image');
+    if (resolved.type !== 'image') continue;
+    const img = await getImage({ src: resolved.image, width: Math.min(PREVIEW_WIDTH, resolved.image.width), format: 'webp' });
+    previews.push(img.src);
+  }
+}
+---
+
+<article
+  class:list={['work-card', { 'work-card--wide': wide }]}
+  data-previews={previews.length ? JSON.stringify(previews) : undefined}
+>
+  <a class="work-card__link" href={`/works/${work.id}/`}>
+    <div class="work-card__media">
+      <Media
+        media={media}
+        alt={data.title}
+        sizes={wide ? '(max-width: 768px) 100vw, 60vw' : '(max-width: 768px) 100vw, 40vw'}
+        class="work-card__base"
+      />
+      {previews.length > 0 && (
+        <>
+          <img class="work-card__preview" alt="" aria-hidden="true" decoding="async" />
+          <span class="work-card__counter label" aria-hidden="true"></span>
+        </>
+      )}
+    </div>
+    <div class="work-card__labels">
+      <div class="work-card__row">
+        <Heading class="work-card__title">{data.title}</Heading>
+        {year && <span class="label">{year}</span>}
+      </div>
+      {data.tags.length > 0 && <span class="label label--accent">{data.tags.join(' · ')}</span>}
+    </div>
+  </a>
+</article>
+
+<script>
+  const HOVER_STEP_MS = 900;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  document.querySelectorAll<HTMLElement>('.work-card').forEach((card) => {
+    const video = card.querySelector<HTMLVideoElement>('video');
+    const preview = card.querySelector<HTMLImageElement>('.work-card__preview');
+    const counter = card.querySelector<HTMLElement>('.work-card__counter');
+    const previews: string[] = card.dataset.previews ? JSON.parse(card.dataset.previews) : [];
+    const total = previews.length + 1;
+    let index = 0;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    let preloaded = false;
+
+    const show = (i: number) => {
+      index = i;
+      if (counter) counter.textContent = `${i + 1} / ${total}`;
+      if (!preview) return;
+      if (i === 0) {
+        preview.classList.remove('is-visible');
+        return;
+      }
+      preview.src = previews[i - 1];
+      preview.classList.add('is-visible');
+    };
+
+    card.addEventListener('mouseenter', () => {
+      if (video) {
+        video.play().catch(() => {});
+        return;
+      }
+      if (!previews.length || reducedMotion) return;
+      if (!preloaded) {
+        previews.forEach((src) => { const img = new Image(); img.src = src; });
+        preloaded = true;
+      }
+      card.classList.add('is-previewing');
+      show(0);
+      timer = setInterval(() => show((index + 1) % total), HOVER_STEP_MS);
+    });
+
+    card.addEventListener('mouseleave', () => {
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+        return;
+      }
+      if (timer) clearInterval(timer);
+      timer = null;
+      card.classList.remove('is-previewing');
+      show(0);
+    });
+  });
+</script>
+
+<style>
+  .work-card {
+    flex: 1 0 0;
+    min-width: var(--card-min-w);
+    max-width: var(--card-max-w);
+  }
+
+  .work-card--wide {
+    flex-grow: var(--card-grow-wide);
+    min-width: var(--card-min-w-wide);
+    max-width: var(--card-max-w-wide);
+  }
+
+  .work-card__link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+  }
+
+  .work-card__media {
+    position: relative;
+    height: var(--card-height);
+    background: var(--color-surface);
+    overflow: hidden;
+  }
+
+  .work-card__media :global(.work-card__base),
+  .work-card__preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .work-card__preview {
+    opacity: 0;
+    transition: opacity var(--duration-base) var(--ease);
+  }
+
+  .work-card__preview:global(.is-visible) {
+    opacity: 1;
+  }
+
+  .work-card__counter {
+    position: absolute;
+    top: var(--space-16);
+    right: var(--space-16);
+    padding: 2px var(--space-8);
+    background: var(--color-bg);
+    color: var(--color-fg);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease);
+  }
+
+  .work-card:global(.is-previewing) .work-card__counter {
+    opacity: 1;
+  }
+
+  .work-card__labels {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .work-card__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-16);
+  }
+
+  .work-card__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-h3);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    text-decoration: underline transparent;
+    text-underline-offset: 4px;
+    transition: text-decoration-color var(--duration-fast) var(--ease);
+  }
+
+  .work-card__link:hover .work-card__title,
+  .work-card__link:focus-visible .work-card__title {
+    text-decoration-color: var(--color-accent);
+  }
+
+  @media (max-width: 768px) {
+    .work-card,
+    .work-card--wide {
+      min-width: 100%;
+      max-width: 100%;
+    }
+  }
+</style>

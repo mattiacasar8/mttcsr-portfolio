@@ -1,0 +1,68 @@
+---
+import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+import '@fontsource/inter/400.css';
+import '../../styles/global.css';
+import Footer from './Footer.astro';
+import Loader from './Loader.astro';
+import { site } from '../../lib/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Absolute or root-relative URL of the social preview image */
+  image?: string;
+  showLoader?: boolean;
+}
+
+const { title, description = site.description, image = site.ogImage, showLoader = false } = Astro.props;
+const pageTitle = title ? `${title} — ${site.name}` : site.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Stable viewport unit: ignores mobile browser UI showing/hiding -->
+    <script is:inline>
+      (function () {
+        var lastWidth = window.innerWidth;
+        function setVh() {
+          document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+        }
+        setVh();
+        window.addEventListener('resize', function () {
+          if (Math.abs(window.innerWidth - lastWidth) > 100) {
+            lastWidth = window.innerWidth;
+            setVh();
+          }
+        }, { passive: true });
+      })();
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    {showLoader && <Loader />}
+    <slot />
+    <Footer />
+  </body>
+</html>

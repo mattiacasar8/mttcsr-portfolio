@@ -1,0 +1,37 @@
+---
+import { site } from '../../lib/site';
+---
+
+<footer class="fixed-footer">
+  <nav class="contact-links" aria-label="Social media and contact links">
+    <a class="label link" href={site.instagram} target="_blank" rel="noopener noreferrer" aria-label={`Visit ${site.name} on Instagram (opens in new tab)`}>instagram</a>
+    <span class="label" aria-hidden="true">|</span>
+    <a class="label link" href={site.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`Visit ${site.name} on LinkedIn (opens in new tab)`}>linkedin</a>
+    <span class="label" aria-hidden="true">|</span>
+    <a class="label link" href={`mailto:${site.email}`} aria-label={`Send email to ${site.name}`}>email</a>
+  </nav>
+</footer>
+
+<style>
+  .fixed-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-16) var(--page-margin);
+    background: var(--footer-fade);
+    z-index: 100;
+  }
+
+  .contact-links {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-8);
+  }
+
+  @media (max-width: 768px) {
+    .fixed-footer {
+      padding-block: var(--space-8);
+    }
+  }
+</style>
