@@ -69,7 +69,7 @@ Copy `src/content/works/_template.md` to `<slug>.md`, put the media in `src/asse
 | `text` | no | description, line breaks kept |
 | `context`, `award`, `role` | no | meta column on the project page |
 | `tags` | no | free text, shown on cards and project page |
-| `gallery` | no | list of `{ src, type }`, justified rows on the project page |
+| `gallery` | no | list of `{ src, type }`, justified rows on the project page (WOA system), images open in a lightbox |
 | `published` | no | defaults to `true` |
 
 Projects without `yearMonth` are listed after dated ones, alphabetically. Previous/next links follow the grid order and wrap around.

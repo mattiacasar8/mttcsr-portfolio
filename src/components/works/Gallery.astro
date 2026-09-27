@@ -1,5 +1,7 @@
 ---
+import { getImage } from 'astro:assets';
 import Media from '../ui/Media.astro';
+import Arrow from '../ui/Arrow.astro';
 import type { ResolvedMedia } from '../../lib/media';
 
 interface Props {
@@ -13,22 +15,36 @@ interface Props {
 // (a flex line with total grow < 1 leaves free space).
 const RATIO_MIN = 9 / 16;
 const RATIO_MAX = 16 / 9;
+const LIGHTBOX_ARROW_SIZE = 20;
 
 const { items, title } = Astro.props;
 
-function ratioOf(media: ResolvedMedia): number | undefined {
+function growOf(media: ResolvedMedia): number | undefined {
   const size = media.type === 'image' ? media.image : media.poster;
   if (!size) return undefined;
   return Math.min(RATIO_MAX, Math.max(RATIO_MIN, size.width / size.height)) / RATIO_MIN;
 }
+
+// Lightbox shows images only (as on WOA), at full resolution
+const lightboxSrcs = await Promise.all(
+  items.flatMap((media) => (media.type === 'image' ? [getImage({ src: media.image, format: 'webp' })] : [])),
+).then((images) => images.map((image) => image.src));
+
+let imageIndex = 0;
 ---
 
 {items.length > 0 && (
   <section class="gallery" aria-label={`${title} — media gallery`}>
     {items.map((media, i) => {
-      const ratio = ratioOf(media);
+      const grow = growOf(media);
+      const lightboxIndex = media.type === 'image' ? imageIndex++ : undefined;
       return (
-        <div class="gallery__item" style={ratio ? `flex-grow: ${ratio.toFixed(3)}` : undefined}>
+        <div
+          class:list={['gallery__item', { 'gallery__item--clickable': lightboxIndex !== undefined }]}
+          style={grow ? `flex-grow: ${grow.toFixed(3)}` : undefined}
+          data-gallery-item
+          data-lightbox-index={lightboxIndex}
+        >
           <Media
             media={media}
             alt={`${title} — ${media.type} ${i + 1}`}
@@ -42,10 +58,36 @@ function ratioOf(media: ResolvedMedia): number | undefined {
   </section>
 )}
 
+{lightboxSrcs.length > 0 && (
+  <div
+    class:list={['lightbox', { 'lightbox--single': lightboxSrcs.length === 1 }]}
+    role="dialog"
+    aria-modal="true"
+    aria-label={`${title} — gallery`}
+    data-lightbox
+    data-srcs={JSON.stringify(lightboxSrcs)}
+    data-title={title}
+  >
+    <div class="lightbox__backdrop" data-lightbox-close></div>
+    <button class="lightbox__close label" type="button" aria-label="Close" data-lightbox-close>✕</button>
+    <button class="lightbox__prev" type="button" aria-label="Previous image" data-lightbox-prev>
+      <Arrow direction="left" size={LIGHTBOX_ARROW_SIZE} />
+    </button>
+    <button class="lightbox__next" type="button" aria-label="Next image" data-lightbox-next>
+      <Arrow direction="right" size={LIGHTBOX_ARROW_SIZE} />
+    </button>
+    <div class="lightbox__content">
+      <img class="lightbox__img" src="" alt="" />
+    </div>
+    <div class="lightbox__counter label"></div>
+  </div>
+)}
+
 <style>
   .gallery {
     display: flex;
     flex-wrap: wrap;
+    align-items: stretch;
     gap: var(--gallery-gap);
     padding: 0 var(--page-margin) var(--space-64);
   }
@@ -62,10 +104,206 @@ function ratioOf(media: ResolvedMedia): number | undefined {
     object-fit: cover;
   }
 
+  .gallery__item--clickable {
+    cursor: pointer;
+    transition: opacity var(--duration-base) var(--ease-out);
+  }
+
+  .gallery__item--clickable:hover {
+    opacity: var(--gallery-hover-opacity);
+  }
+
+  /* Reveal on load; the class is added by the script so items stay visible without JS */
+  .gallery__item.is-revealing {
+    opacity: 0;
+    transform: translateY(var(--reveal-offset));
+    transition: opacity var(--duration-reveal) var(--ease-out), transform var(--duration-reveal) var(--ease-out);
+  }
+
+  .gallery__item.is-revealing.is-loaded {
+    opacity: 1;
+    transform: none;
+  }
+
+  .gallery__item--clickable.is-revealing.is-loaded:hover {
+    opacity: var(--gallery-hover-opacity);
+  }
+
   @media (max-width: 768px) {
     .gallery__item {
       flex: none;
       width: 100%;
     }
   }
+
+  /* ── Lightbox ─────────────────────────────────────── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-base) var(--ease-out), visibility 0s var(--duration-base);
+  }
+
+  .lightbox.is-open {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity var(--duration-base) var(--ease-out), visibility 0s;
+  }
+
+  .lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--lightbox-backdrop);
+  }
+
+  .lightbox__content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: var(--lightbox-max-w);
+    max-height: var(--lightbox-max-h);
+  }
+
+  .lightbox__img {
+    max-width: var(--lightbox-max-w);
+    max-height: var(--lightbox-max-h);
+    object-fit: contain;
+    user-select: none;
+  }
+
+  .lightbox__close,
+  .lightbox__prev,
+  .lightbox__next {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--color-fg-subtle);
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease);
+  }
+
+  .lightbox__close:hover,
+  .lightbox__prev:hover,
+  .lightbox__next:hover {
+    color: var(--color-fg);
+  }
+
+  .lightbox__close {
+    top: var(--space-24);
+    right: var(--space-24);
+    padding: var(--space-8);
+    font-size: var(--text-body);
+  }
+
+  .lightbox__prev,
+  .lightbox__next {
+    top: 50%;
+    transform: translateY(-50%);
+    padding: var(--space-16) var(--space-24);
+  }
+
+  .lightbox__prev { left: var(--space-16); }
+  .lightbox__next { right: var(--space-16); }
+
+  .lightbox__counter {
+    position: absolute;
+    bottom: var(--space-24);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .lightbox--single .lightbox__prev,
+  .lightbox--single .lightbox__next {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .lightbox__prev { left: var(--space-8); padding: var(--space-8); }
+    .lightbox__next { right: var(--space-8); padding: var(--space-8); }
+  }
 </style>
+
+<script>
+  // ── Reveal: fade in each item once its media has loaded ─────────────────
+  document.querySelectorAll<HTMLElement>('[data-gallery-item]').forEach((item) => {
+    const media = item.querySelector<HTMLImageElement | HTMLVideoElement>('img, video');
+    if (!media) return;
+    item.classList.add('is-revealing');
+    const reveal = () => requestAnimationFrame(() => item.classList.add('is-loaded'));
+    const ready = media instanceof HTMLImageElement ? media.complete : media.readyState >= 1;
+    if (ready) reveal();
+    else {
+      media.addEventListener(media instanceof HTMLImageElement ? 'load' : 'loadedmetadata', reveal, { once: true });
+      media.addEventListener('error', reveal, { once: true });
+    }
+  });
+
+  // ── Lightbox ─────────────────────────────────────────────────────────────
+  const lightbox = document.querySelector<HTMLElement>('[data-lightbox]');
+  if (lightbox) {
+    const srcs: string[] = JSON.parse(lightbox.dataset.srcs ?? '[]');
+    const title = lightbox.dataset.title ?? '';
+    const img = lightbox.querySelector<HTMLImageElement>('.lightbox__img')!;
+    const counter = lightbox.querySelector<HTMLElement>('.lightbox__counter')!;
+    const closeButton = lightbox.querySelector<HTMLButtonElement>('.lightbox__close')!;
+    let current = 0;
+    let opener: HTMLElement | null = null;
+
+    const show = (index: number) => {
+      current = (index + srcs.length) % srcs.length;
+      img.src = srcs[current];
+      img.alt = `${title} — image ${current + 1} of ${srcs.length}`;
+      counter.textContent = `${current + 1} / ${srcs.length}`;
+    };
+
+    const open = (index: number, trigger: HTMLElement) => {
+      opener = trigger;
+      show(index);
+      lightbox.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      closeButton.focus();
+    };
+
+    const close = () => {
+      lightbox.classList.remove('is-open');
+      document.body.style.overflow = '';
+      opener?.focus();
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-lightbox-index]').forEach((item) => {
+      item.tabIndex = 0;
+      item.setAttribute('role', 'button');
+      const index = Number(item.dataset.lightboxIndex);
+      item.addEventListener('click', () => open(index, item));
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          open(index, item);
+        }
+      });
+    });
+
+    lightbox.querySelectorAll('[data-lightbox-close]').forEach((el) => el.addEventListener('click', close));
+    lightbox.querySelector('[data-lightbox-prev]')?.addEventListener('click', () => show(current - 1));
+    lightbox.querySelector('[data-lightbox-next]')?.addEventListener('click', () => show(current + 1));
+
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('is-open')) return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') show(current - 1);
+      if (e.key === 'ArrowRight') show(current + 1);
+    });
+  }
+</script>

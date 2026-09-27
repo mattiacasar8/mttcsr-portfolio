@@ -768,15 +768,22 @@ function toggleCustomCover() {
   markDirty();
 }
 
-// ── Gallery (strip preview, like the site) ──────────────────────────────────
+// ── Gallery (justified preview, like the site) ──────────────────────────────
+// Same rule as src/components/works/Gallery.astro: grow ∝ clamped aspect ratio,
+// normalised so a lone item on the last row fills it.
+const GALLERY_RATIO_MIN = 9 / 16;
+const GALLERY_RATIO_MAX = 16 / 9;
+const galleryGrow = (ratio) =>
+  (Math.min(GALLERY_RATIO_MAX, Math.max(GALLERY_RATIO_MIN, ratio)) / GALLERY_RATIO_MIN).toFixed(3);
+
 function renderGalleryPreview() {
   const container = $('gallery-grid');
   container.innerHTML = state.gallery.map((item, idx) => {
-    const ratio = item.ratio ? item.ratio.toFixed(3) : '1.5';
+    const grow = item.ratio ? galleryGrow(item.ratio) : '1';
     const src = item.isVideo ? item.thumbUrl : item.previewUrl;
     const canEdit = !item.isVideo;
     const canRotate = item.kind === 'image-uploaded';
-    return `<div class="gc" data-idx="${idx}" style="--ratio:${ratio}">
+    return `<div class="gc" data-idx="${idx}" style="--grow:${grow}">
       ${src
         ? `<img class="gc-img" src="${src}" draggable="false" alt="" onload="onGalleryImgLoad(this,${idx})">`
         : '<div class="gc-video">▶</div>'}
@@ -792,7 +799,7 @@ function renderGalleryPreview() {
 
   if (container.sortableInstance) container.sortableInstance.destroy();
   container.sortableInstance = new Sortable(container, {
-    animation: 150, handle: '.gc-drag', ghostClass: 'is-dragging', direction: 'horizontal',
+    animation: 150, handle: '.gc-drag', ghostClass: 'is-dragging',
     onEnd(evt) {
       if (evt.oldIndex === evt.newIndex) return;
       const [moved] = state.gallery.splice(evt.oldIndex, 1);
@@ -807,7 +814,7 @@ function onGalleryImgLoad(imgEl, idx) {
   const item = state.gallery[idx];
   if (!item || !imgEl.naturalWidth) return;
   item.ratio = imgEl.naturalWidth / imgEl.naturalHeight;
-  imgEl.closest('.gc')?.style.setProperty('--ratio', item.ratio.toFixed(3));
+  imgEl.closest('.gc')?.style.setProperty('--grow', galleryGrow(item.ratio));
 }
 
 async function rotateGalleryItem(idx, deg) {

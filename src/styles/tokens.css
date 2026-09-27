@@ -68,11 +68,18 @@
   --gallery-item-height: 480px;
   --gallery-item-min-w:  260px;
   --gallery-gap:         12px;
+  --gallery-hover-opacity: 0.85;
+  --reveal-offset:       14px;
+  --lightbox-backdrop:   rgba(0, 0, 0, 0.96);
+  --lightbox-max-w:      90vw;
+  --lightbox-max-h:      90vh;
 
   /* ── Motion ────────────────────────────────────────── */
   --duration-fast: 0.2s;
   --duration-base: 0.3s;
+  --duration-reveal: 0.6s;   /* new: gallery items fade in on load */
   --ease: ease;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);   /* new: WOA expo-out */
 
   /* ── Focus ─────────────────────────────────────────── */
   --focus-width:  2px;
