@@ -1,6 +1,7 @@
 ---
 import { getImage } from 'astro:assets';
 import Media from '../ui/Media.astro';
+import Tags from '../ui/Tags.astro';
 import { resolveMedia } from '../../lib/media';
 import { workYear, type Work } from '../../lib/works';
 
@@ -58,7 +59,7 @@ if (media.type === 'image') {
         <Heading class="work-card__title">{data.title}</Heading>
         {year && <span class="label">{year}</span>}
       </div>
-      {data.tags.length > 0 && <span class="label label--accent">{data.tags.join(' · ')}</span>}
+      <Tags tags={data.tags} />
     </div>
   </a>
 </article>
@@ -122,13 +123,11 @@ if (media.type === 'image') {
   .work-card {
     flex: 1 0 0;
     min-width: var(--card-min-w);
-    max-width: var(--card-max-w);
   }
 
   .work-card--wide {
     flex-grow: var(--card-grow-wide);
     min-width: var(--card-min-w-wide);
-    max-width: var(--card-max-w-wide);
   }
 
   .work-card__link {
@@ -190,19 +189,21 @@ if (media.type === 'image') {
     gap: var(--space-16);
   }
 
+  /* Inverted box on hover; padding cancelled by margin so the title stays aligned */
   .work-card__title {
     font-family: var(--font-serif);
     font-size: var(--text-h3);
     font-weight: 400;
     line-height: var(--leading-tight);
-    text-decoration: underline transparent;
-    text-underline-offset: 4px;
-    transition: text-decoration-color var(--duration-fast) var(--ease);
+    padding: var(--box-pad-y) var(--box-pad-x);
+    margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
+    transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
   }
 
   .work-card__link:hover .work-card__title,
   .work-card__link:focus-visible .work-card__title {
-    text-decoration-color: var(--color-accent);
+    background: var(--color-invert-bg);
+    color: var(--color-invert-fg);
   }
 
   @media (max-width: 768px) {

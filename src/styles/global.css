@@ -32,13 +32,13 @@ a {
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background: var(--color-invert-bg);
+  color: var(--color-invert-fg);
 }
 
 /* ── Focus ─────────────────────────────────────────── */
 :focus-visible {
-  outline: var(--focus-width) solid var(--color-accent);
+  outline: var(--focus-width) solid var(--color-fg);
   outline-offset: var(--focus-offset);
 }
 
@@ -52,16 +52,59 @@ a {
 }
 
 .label--subtle { color: var(--color-fg-subtle); }
-.label--accent { color: var(--color-accent); }
 
-.link {
-  transition: color var(--duration-fast) var(--ease);
+/* Inverted box: padding is cancelled by a negative margin so text stays aligned */
+.link,
+.is-active {
+  padding: var(--box-pad-y) var(--box-pad-x);
+  margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
+  transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 
-.link:hover {
-  color: var(--color-accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.link:hover,
+.is-active {
+  background: var(--color-invert-bg);
+  color: var(--color-invert-fg);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.tag {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-label);
+  padding: var(--box-pad-y) var(--box-pad-x);
+  background: var(--color-invert-bg-soft);
+  color: var(--color-invert-fg);
+}
+
+.button {
+  align-self: flex-start;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--text-button);
+  color: var(--color-fg);
+  background: transparent;
+  padding: var(--space-16) var(--space-32);
+  border: 1px solid var(--color-fg-muted);
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease), color var(--duration-base) var(--ease), border-color var(--duration-base) var(--ease);
+}
+
+.button:hover,
+.button:focus-visible {
+  background: var(--color-invert-bg);
+  color: var(--color-invert-fg);
+  border-color: var(--color-invert-bg);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .section-title {

@@ -1,6 +1,7 @@
 ---
 import Media from '../ui/Media.astro';
 import Arrow from '../ui/Arrow.astro';
+import Tags from '../ui/Tags.astro';
 import { resolveMedia } from '../../lib/media';
 import type { Work } from '../../lib/works';
 
@@ -35,7 +36,7 @@ const links = [
         <span class="project-nav__text">
           <span class="label">{link.label}</span>
           <span class="project-nav__title">{link.work.data.title}</span>
-          {link.work.data.tags.length > 0 && <span class="label label--accent">{link.work.data.tags.join(' · ')}</span>}
+          <Tags tags={link.work.data.tags} />
         </span>
       </a>
     ))}
@@ -92,13 +93,15 @@ const links = [
     font-family: var(--font-serif);
     font-size: var(--text-h2);
     line-height: var(--leading-tight);
-    text-decoration: underline transparent;
-    text-underline-offset: 4px;
-    transition: text-decoration-color var(--duration-fast) var(--ease);
+    padding: var(--box-pad-y) var(--box-pad-x);
+    margin: calc(-1 * var(--box-pad-y)) calc(-1 * var(--box-pad-x));
+    transition: background var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
   }
 
-  .project-nav__link:hover .project-nav__title {
-    text-decoration-color: var(--color-accent);
+  .project-nav__link:hover .project-nav__title,
+  .project-nav__link:focus-visible .project-nav__title {
+    background: var(--color-invert-bg);
+    color: var(--color-invert-fg);
   }
 
   @media (max-width: 768px) {

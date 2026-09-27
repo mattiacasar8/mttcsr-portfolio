@@ -26,6 +26,7 @@ src/
 ├── assets/works/<slug>/     # project media (hero, cover, gallery-N, *.thumb.jpg posters)
 ├── pages/
 │   ├── index.astro          # hero canvas + about + selected works + CTA
+│   ├── about.astro          # bio, links, contact form (Web3Forms)
 │   └── works/
 │       ├── index.astro      # works grid
 │       └── [slug].astro     # project page
@@ -80,12 +81,16 @@ Projects without `yearMonth` are listed after dated ones, alphabetically. Previo
 
 ## Design system
 
-Tokens are in `src/styles/tokens.css`. Monochrome (white at 100/80/60% on black), one accent `#00aa00` taken from the canvas palette (key `2`), Instrument Serif for voice and UI, Inter for body text. Fonts are self-hosted via `@fontsource`.
+Tokens are in `src/styles/tokens.css`. Monochrome (white at 100/80/60% on black); emphasis is an inverted box (white or light grey with black text) for tags, active nav and hover. Instrument Serif for voice and UI, Inter for body text. Fonts are self-hosted via `@fontsource`.
 
 ## Canvas
 
 `src/scripts/morpho-ascii.js` renders a Gray-Scott reaction-diffusion field as ASCII.
 Draw with mouse/touch; hold Shift to erase, Ctrl/Cmd to add the other chemical; keys `1`–`9` switch palette, `0` toggles rainbow mode.
+
+## Contact form
+
+The form on `/about/#contact` posts to [Web3Forms](https://web3forms.com) (no backend, messages go to the site email). Request an access key with the site email and paste it in `contactFormKey` in `src/lib/site.ts`; the key is public by design.
 
 ## Deploy
 

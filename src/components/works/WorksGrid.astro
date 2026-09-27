@@ -5,29 +5,70 @@ import type { Work } from '../../lib/works';
 interface Props {
   works: Work[];
   headingTag?: 'h2' | 'h3';
+  /**
+   * mosaic: WOA Studio flex-wrap grid (works page).
+   * pairs: fixed rows of two, wide card alternating sides (home selection).
+   */
+  layout?: 'mosaic' | 'pairs';
 }
 
-const { works, headingTag } = Astro.props;
+const { works, headingTag, layout = 'mosaic' } = Astro.props;
 
 // WOA mosaic: diagonal pattern of wide cards (0, 4, 8, …)
-const isWide = (i: number) => i % 3 === Math.floor(i / 3) % 3;
+const isWideMosaic = (i: number) => i % 3 === Math.floor(i / 3) % 3;
+// Pairs: row 0 → [wide, normal], row 1 → [normal, wide], …
+const isWidePair = (i: number) => (i % 2) === (Math.floor(i / 2) % 2);
+const PAIR = 2;
+const rows: Work[][] = [];
+for (let i = 0; i < works.length; i += PAIR) rows.push(works.slice(i, i + PAIR));
 ---
 
-<div class="works-grid">
-  {works.map((work, i) => <WorkCard work={work} wide={isWide(i)} headingTag={headingTag} />)}
-</div>
+{layout === 'pairs' ? (
+  <div class="works-grid works-grid--pairs">
+    {rows.map((row, r) => (
+      <div class="works-grid__row">
+        {row.map((work, j) => <WorkCard work={work} wide={isWidePair(r * PAIR + j)} headingTag={headingTag} />)}
+      </div>
+    ))}
+  </div>
+) : (
+  <div class="works-grid">
+    {works.map((work, i) => <WorkCard work={work} wide={isWideMosaic(i)} headingTag={headingTag} />)}
+  </div>
+)}
 
 <style>
   .works-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-32) var(--grid-gap);
+    gap: var(--card-row-gap) var(--card-gap);
     align-items: flex-start;
+  }
+
+  /* Exactly two cards per row regardless of viewport width */
+  .works-grid--pairs {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .works-grid__row {
+    display: flex;
+    gap: var(--card-gap);
+  }
+
+  .works-grid__row :global(.work-card) {
+    min-width: 0;
   }
 
   @media (max-width: 768px) {
     .works-grid {
       row-gap: var(--space-24);
+    }
+
+    .works-grid__row {
+      flex-direction: column;
+      gap: var(--space-24);
     }
   }
 </style>

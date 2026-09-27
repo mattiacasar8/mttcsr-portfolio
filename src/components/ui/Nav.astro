@@ -1,27 +1,31 @@
 ---
-import { site } from '../../lib/site';
+export type NavSection = 'works' | 'about';
 
 interface Props {
-  current?: 'works';
+  current?: NavSection;
 }
 
 const { current } = Astro.props;
+const items: { label: string; href: string; section?: NavSection }[] = [
+  { label: 'works', href: '/works/', section: 'works' },
+  { label: 'about', href: '/about/', section: 'about' },
+  { label: 'contact', href: '/about/#contact' },
+];
 ---
 
 <nav class="nav" aria-label="Main">
-  <a class:list={['label', 'link', { 'is-active': current === 'works' }]} href="/works/" aria-current={current === 'works' ? 'page' : undefined}>works</a>
-  <a class="label link" href="/#about">about</a>
-  <a class="label link" href={`mailto:${site.email}`}>contact</a>
+  {items.map((item) => {
+    const active = item.section !== undefined && item.section === current;
+    return (
+      <a class:list={['label', 'link', { 'is-active': active }]} href={item.href} aria-current={active ? 'page' : undefined}>{item.label}</a>
+    );
+  })}
 </nav>
 
 <style>
   .nav {
     display: flex;
     gap: var(--space-24);
-  }
-
-  .is-active {
-    color: var(--color-accent);
   }
 
   @media (max-width: 768px) {

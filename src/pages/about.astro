@@ -1,0 +1,229 @@
+---
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import SiteHeader from '../components/layout/SiteHeader.astro';
+import { site } from '../lib/site';
+
+if (!site.contactFormKey) {
+  console.warn('[about] site.contactFormKey is empty: the contact form cannot send messages.');
+}
+
+const links = [
+  { key: 'linkedin', label: 'mattia-casarotto', href: site.linkedin, external: true },
+  { key: 'instagram', label: '@mttcsr', href: site.instagram, external: true },
+  { key: 'email', label: site.email, href: `mailto:${site.email}`, external: false },
+];
+---
+
+<BaseLayout title="About" description={`About ${site.name} — creative technologist and multimedia artist.`}>
+  <SiteHeader current="about" />
+
+  <main id="main-content">
+    <section class="about-grid about-grid--intro">
+      <div class="about-grid__side">
+        <dl class="links">
+          {links.map((link) => (
+            <div class="links__row">
+              <dt class="label label--subtle">{link.key}</dt>
+              <dd>
+                <a
+                  class="link links__value"
+                  href={link.href}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                >{link.label}</a>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div class="about-grid__main">
+        <h1 class="about__title">About</h1>
+        <div class="body-text about__bio">
+          <p>I'm Mattia, an Italian creative technologist and multimedia artist at WOA Studio. I've had the opportunity to work with different creative teams, big and small, both in Italy and in the Netherlands. Big on sci-fi, videogames, and a storyteller at heart, I try to blend all this into my design work.</p>
+          <p>To me, good design is about striking a balance: a deep understanding of the problem, pushing creative boundaries, and delivering more than just a solution. It's about crafting an experience. Solving the client's problem is what we are paid to do, but what really sets the work apart is weaving in a bit of magic — that emotional resonance that transforms a project from functional to memorable.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="about-grid" aria-labelledby="contact-heading">
+      <div class="about-grid__side">
+        <h2 id="contact-heading" class="section-title">Contact</h2>
+      </div>
+      <div class="about-grid__main">
+        <form id="contact-form" class="contact-form" novalidate>
+          <input type="hidden" name="access_key" value={site.contactFormKey} />
+          <input type="hidden" name="subject" value={`New message from ${new URL(Astro.site ?? 'https://mttcsr.com').hostname}`} />
+          <input type="hidden" name="from_name" value={site.name} />
+          <!-- Honeypot: bots fill it, people never see it -->
+          <input type="checkbox" name="botcheck" class="contact-form__trap" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+          <div class="field">
+            <label class="label label--subtle" for="contact-name">name</label>
+            <input id="contact-name" name="name" type="text" autocomplete="name" required />
+          </div>
+          <div class="field">
+            <label class="label label--subtle" for="contact-email">email</label>
+            <input id="contact-email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label class="label label--subtle" for="contact-message">message</label>
+            <textarea id="contact-message" name="message" rows="6" required></textarea>
+          </div>
+
+          <div class="contact-form__actions">
+            <button class="button" type="submit">Send message</button>
+            <p class="label contact-form__status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<script>
+  import { site } from '../lib/site';
+
+  const MESSAGES = {
+    sending: 'Sending…',
+    sent: 'Thanks, your message has been sent.',
+    invalid: 'Please fill in all fields with a valid email.',
+    failed: `Something went wrong. You can write to ${site.email}.`,
+  };
+
+  const form = document.querySelector<HTMLFormElement>('#contact-form');
+  const status = form?.querySelector<HTMLElement>('.contact-form__status');
+  const button = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!status || !button) return;
+    if (!form.checkValidity()) {
+      status.textContent = MESSAGES.invalid;
+      form.reportValidity();
+      return;
+    }
+
+    button.disabled = true;
+    status.textContent = MESSAGES.sending;
+    try {
+      const response = await fetch(site.contactEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.message || `HTTP ${response.status}`);
+      form.reset();
+      status.textContent = MESSAGES.sent;
+    } catch (error) {
+      console.error('[contact] send failed:', error);
+      status.textContent = MESSAGES.failed;
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  /* Same two-column rhythm as the project page: side column left, text right */
+  .about-grid {
+    display: grid;
+    grid-template-columns: minmax(0, var(--meta-width)) minmax(0, var(--text-max));
+    justify-content: space-between;
+    column-gap: var(--space-64);
+    row-gap: var(--space-24);
+    padding: var(--space-32) var(--page-margin) var(--space-64);
+    scroll-margin-top: var(--space-32);
+  }
+
+  .about__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-display);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-24);
+  }
+
+  .about__bio {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+  }
+
+  .links {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .links__row {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: baseline;
+    padding: var(--space-8) 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .links__value {
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    color: var(--color-fg-muted);
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .field input,
+  .field textarea {
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--leading-body);
+    color: var(--color-fg);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--color-line);
+    padding: var(--space-8) 0;
+    resize: vertical;
+    transition: border-color var(--duration-fast) var(--ease);
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-bottom-color: var(--color-fg);
+  }
+
+  .contact-form__trap {
+    position: absolute;
+    left: -9999px;
+  }
+
+  .contact-form__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-24);
+  }
+
+  @media (max-width: 768px) {
+    .about-grid {
+      grid-template-columns: minmax(0, 1fr);
+      padding-block: var(--space-24) var(--space-40);
+    }
+
+    /* Bio first, links after it */
+    .about-grid--intro .about-grid__main {
+      order: -1;
+    }
+
+    .contact-form__actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

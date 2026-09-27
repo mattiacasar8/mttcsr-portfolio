@@ -19,13 +19,13 @@ const selected = works.slice(0, site.homeWorksCount);
         <h2 id="works-heading" class="section-title">Selected works</h2>
         <a class="label link home-works__all" href="/works/">all works ({works.length}) <Arrow direction="right" size={12} /></a>
       </div>
-      <WorksGrid works={selected} headingTag="h3" />
+      <WorksGrid works={selected} headingTag="h3" layout="pairs" />
     </section>
 
     <section class="cta" aria-labelledby="cta-heading">
       <h2 id="cta-heading" class="section-title">Want to see more?</h2>
       <p class="body-text">Drop me a line to see the complete portfolio and discuss potential collaborations.</p>
-      <a class="cta__button" href={`mailto:${site.email}`} aria-label={`Send email to ${site.name}`}>Get in touch</a>
+      <a class="button" href="/about/#contact">Get in touch</a>
     </section>
   </main>
 </BaseLayout>
@@ -56,24 +56,6 @@ const selected = works.slice(0, site.homeWorksCount);
     flex-direction: column;
     gap: var(--space-24);
     padding: var(--space-64) var(--page-margin);
-  }
-
-  .cta__button {
-    align-self: flex-start;
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--text-button);
-    color: var(--color-fg);
-    padding: var(--space-16) var(--space-32);
-    border: 1px solid var(--color-fg-muted);
-    transition: background var(--duration-base) var(--ease), color var(--duration-base) var(--ease), border-color var(--duration-base) var(--ease);
-  }
-
-  .cta__button:hover,
-  .cta__button:focus-visible {
-    background: var(--color-fg);
-    color: var(--color-bg);
-    border-color: var(--color-fg);
   }
 
   @media (max-width: 768px) {

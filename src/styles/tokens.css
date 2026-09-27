@@ -12,7 +12,10 @@
   --color-fg-subtle: rgba(255, 255, 255, 0.6);
   --color-surface:   rgba(255, 255, 255, 0.05);
   --color-line:      rgba(255, 255, 255, 0.2);   /* new: hairlines */
-  --color-accent:    #00aa00;                    /* new: canvas palette 2 "hacker" */
+  /* new: inverted boxes replace an accent colour (active nav, hover, tags) */
+  --color-invert-bg:      var(--color-fg);
+  --color-invert-bg-soft: var(--color-fg-muted);
+  --color-invert-fg:      var(--color-bg);
   --footer-fade:     linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
 
   /* ── Typography ────────────────────────────────────── */
@@ -27,6 +30,10 @@
   --text-button:  1rem;
   --text-label:   0.75rem;  /* links, nav, meta, tags */
   --text-skip:    0.875rem;
+
+  /* inverted box around label text, scales with font */
+  --box-pad-y: 0.1em;
+  --box-pad-x: 0.4em;
 
   --leading-tight: 1.2;
   --leading-body:  1.6;
@@ -50,13 +57,13 @@
   --gallery-height: calc(var(--vh, 1vh) * 45);  /* project page strip */
   --hero-max-height: calc(var(--vh, 1vh) * 85); /* keeps portrait heroes within the viewport */
 
-  /* Works grid (new) — WOA mosaic pattern */
-  --card-height:      440px;
+  /* Works grid (new) — WOA Studio mosaic values */
+  --card-height:      512px;
   --card-min-w:       400px;
   --card-min-w-wide:  600px;
-  --card-max-w:       800px;
-  --card-max-w-wide:  1200px;
   --card-grow-wide:   1.5;
+  --card-gap:         12px;
+  --card-row-gap:     var(--space-32);   /* labels sit under the image */
 
   /* ── Motion ────────────────────────────────────────── */
   --duration-fast: 0.2s;

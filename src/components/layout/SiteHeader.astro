@@ -1,9 +1,9 @@
 ---
-import Nav from '../ui/Nav.astro';
+import Nav, { type NavSection } from '../ui/Nav.astro';
 import { site } from '../../lib/site';
 
 interface Props {
-  current?: 'works';
+  current?: NavSection;
 }
 
 const { current } = Astro.props;

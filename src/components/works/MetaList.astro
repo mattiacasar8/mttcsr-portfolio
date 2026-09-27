@@ -1,9 +1,11 @@
 ---
+import Tags from '../ui/Tags.astro';
+
 interface Props {
-  items: { key: string; value?: string; accent?: boolean }[];
+  items: { key: string; value?: string | string[] }[];
 }
 
-const items = Astro.props.items.filter((item) => item.value);
+const items = Astro.props.items.filter((item) => (Array.isArray(item.value) ? item.value.length > 0 : item.value));
 ---
 
 {items.length > 0 && (
@@ -11,7 +13,7 @@ const items = Astro.props.items.filter((item) => item.value);
     {items.map((item) => (
       <div class="meta-list__row">
         <dt class="label label--subtle">{item.key}</dt>
-        <dd class:list={[item.accent ? 'label label--accent' : 'meta-list__value']}>{item.value}</dd>
+        <dd class="meta-list__value">{Array.isArray(item.value) ? <Tags tags={item.value} /> : item.value}</dd>
       </div>
     ))}
   </dl>
