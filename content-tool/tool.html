@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mttcsr — Content Manager</title>
+  <script src="/vendor/heic2any.min.js"></script>
+  <script src="/vendor/sortable.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">mttcsr — Works</div>
+  <div>
+    <button id="btn-back" class="nav-btn ghost" style="display:none" onclick="showDashboard()">← Annulla ed Esci</button>
+    <button id="btn-new" class="nav-btn" onclick="openEditor()">+ Nuovo Progetto</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── DASHBOARD ─────────────────────────────────────────────────────────── -->
+  <div id="view-dashboard">
+    <div class="dashboard-section" id="sec-works" style="display:none">
+      <h2>Works</h2>
+      <div class="project-grid" id="grid-works"></div>
+    </div>
+    <div id="loading-dashboard" style="text-align:center; padding: 3rem; color: #888;">Caricamento progetti...</div>
+  </div>
+
+  <!-- ── EDITOR ────────────────────────────────────────────────────────────── -->
+  <div id="view-editor">
+    <section class="section">
+      <h2 id="editor-title">Crea Progetto <span id="status-info" class="status-badge">Incompleto</span></h2>
+      <div class="field"><label for="title">Titolo</label><input type="text" id="title" oninput="updateTitle()" placeholder="Nome progetto"></div>
+      <div class="field"><label for="slug">Slug (URL: /works/slug/)</label><input type="text" id="slug" placeholder="nome-progetto"></div>
+      <div class="field"><label for="subtitle">Sottotitolo (opzionale)</label><input type="text" id="subtitle" oninput="updateState()" placeholder="Breve descrizione"></div>
+      <div class="field" style="display:flex; align-items:center; gap:0.8rem;">
+        <input type="checkbox" id="published" checked onchange="updateState()" style="width:18px; height:18px; cursor:pointer">
+        <label for="published" style="margin-bottom:0; cursor:pointer">Pubblicato (visibile sul sito)</label>
+        <span id="published-badge" class="status-badge complete" style="margin-left:auto;">Pubblicato</span>
+      </div>
+      <div class="field">
+        <label for="year">Data (opzionale — ordina la griglia, l'anno appare sulla card)</label>
+        <div style="display:flex;gap:0.5rem">
+          <select id="year" onchange="updateState()"></select>
+          <select id="month" onchange="updateState()">
+            <option value="01">Gennaio</option><option value="02">Febbraio</option><option value="03">Marzo</option>
+            <option value="04">Aprile</option><option value="05">Maggio</option><option value="06">Giugno</option>
+            <option value="07">Luglio</option><option value="08">Agosto</option><option value="09">Settembre</option>
+            <option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Dettagli (colonna dati nella pagina progetto)</h2>
+      <p class="section-hint">Tutti opzionali: i campi vuoti non vengono mostrati.</p>
+      <div class="field"><label for="context">Contesto</label><input type="text" id="context" oninput="updateState()" placeholder="Cliente, scuola, studio…"></div>
+      <div class="field"><label for="award">Premio</label><input type="text" id="award" oninput="updateState()" placeholder="es. ADI Design Index 2023"></div>
+      <div class="field"><label for="role">Ruolo</label><input type="text" id="role" oninput="updateState()" placeholder="es. Art direction, 3D"></div>
+      <div class="field"><label for="tags">Tag (separati da virgola)</label><input type="text" id="tags" oninput="updateState()" placeholder="3d, motion"></div>
+    </section>
+
+    <section class="section">
+      <h2>Impostazioni WebP (nuovi caricamenti)</h2>
+      <div class="field">
+        <div class="quality-row">
+          <span class="quality-cap">50%</span>
+          <input type="range" id="quality" min="50" max="95" value="80" step="5" aria-label="Qualità WebP" oninput="document.getElementById('quality-val').textContent=this.value+'%'">
+          <span class="quality-cap">95%</span>
+        </div>
+        <div style="text-align:center; font-size:0.8rem; margin-top:0.4rem; color:#666">Qualità: <span id="quality-val" style="font-weight:700">80%</span> · lato lungo max 1920px (il sito genera poi le versioni responsive)</div>
+      </div>
+    </section>
+
+    <!-- ── SOURCES ─────────────────────────────────────────────────────────── -->
+    <section class="section section-sources">
+      <h2>Sorgenti Video</h2>
+      <p class="section-hint">
+        <strong>Inizia da qui per i video.</strong> Carica il file originale (anche pesante) — poi estrai clip
+        e assegnale a Hero, Cover o Gallery senza ricaricare il file. Al salvataggio diventano WebM VP9 720p senza audio.
+      </p>
+      <div class="dropzone dropzone-sources" id="dz-sources">
+        <span class="dropzone-icon">↑</span>
+        <span class="dropzone-label">Trascina qui il video sorgente, oppure clicca per sfogliare</span>
+        <input type="file" id="sources-input" multiple accept="video/*">
+      </div>
+      <div class="convert-status" id="sources-status"></div>
+      <div class="sources-grid" id="sources-grid"></div>
+    </section>
+
+    <section class="section">
+      <h2>Contenuti</h2>
+      <p class="section-hint">Hero = apertura della pagina progetto. Cover = media della card in griglia (di default uguale all'Hero). Gallery = striscia a scorrimento.</p>
+
+      <div class="field">
+        <label>Hero</label>
+        <div class="dropzone dropzone-slot" id="dz-hero">
+          <span class="dropzone-label">Immagine — oppure usa "+ Clip da sorgente" sotto</span>
+          <input type="file" id="hero" accept="image/*,.heic,.heif">
+        </div>
+        <div class="slot-actions">
+          <button type="button" class="slot-clip-btn" onclick="pickClipForSlot('hero')">+ Clip da sorgente</button>
+        </div>
+        <div class="convert-status" id="hero-status"></div>
+        <div id="hero-grid"></div>
+      </div>
+
+      <div class="field" style="display:flex; align-items:center; gap:0.8rem;">
+        <input type="checkbox" id="use-custom-cover" onchange="toggleCustomCover()" style="width:18px; height:18px; cursor:pointer">
+        <label for="use-custom-cover" style="margin-bottom:0; cursor:pointer">Usa una Cover diversa dall'Hero (card in griglia)</label>
+      </div>
+
+      <div class="field" id="cover-field" style="display:none">
+        <label>Cover</label>
+        <div class="dropzone dropzone-slot" id="dz-cover">
+          <span class="dropzone-label">Immagine — oppure usa "+ Clip da sorgente" sotto</span>
+          <input type="file" id="cover" accept="image/*,.heic,.heif">
+        </div>
+        <div class="slot-actions">
+          <button type="button" class="slot-clip-btn" onclick="pickClipForSlot('cover')">+ Clip da sorgente</button>
+        </div>
+        <div class="convert-status" id="cover-status"></div>
+        <div id="cover-grid"></div>
+      </div>
+
+      <div class="field">
+        <label for="text">Descrizione</label>
+        <textarea id="text" oninput="updateState()" rows="6" placeholder="Testo del progetto. Gli a-capo vengono mantenuti."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Gallery (striscia a scorrimento)</label>
+        <div class="dropzone dropzone-slot" id="dz-gallery">
+          <span class="dropzone-label">Immagini — oppure usa "+ Clip da sorgente" sotto</span>
+          <input type="file" id="gallery" multiple accept="image/*,.heic,.heif">
+        </div>
+        <div class="slot-actions">
+          <button type="button" class="slot-clip-btn" onclick="pickClipForSlot('gallery')">+ Clip da sorgente</button>
+        </div>
+        <div class="convert-status" id="gallery-status"></div>
+        <div class="gallery-preview" id="gallery-grid"></div>
+      </div>
+    </section>
+
+    <button class="btn-download" onclick="saveProject()" id="btn-save">Salva Progetto</button>
+  </div>
+
+</div>
+
+<!-- ── Crop Modal ──────────────────────────────────────────────────────────── -->
+<div id="crop-modal" class="crop-modal">
+  <div class="crop-inner">
+    <div class="crop-header">
+      <h3>Ritaglia immagine</h3>
+      <div class="crop-presets">
+        <button class="crop-preset active" onclick="setCropRatio(16/9, this)">16:9</button>
+        <button class="crop-preset" onclick="setCropRatio(4/3, this)">4:3</button>
+        <button class="crop-preset" onclick="setCropRatio(1, this)">1:1</button>
+        <button class="crop-preset" onclick="setCropRatio(9/16, this)">9:16</button>
+      </div>
+    </div>
+    <div class="crop-stage" id="crop-stage">
+      <div class="crop-img-wrap" id="crop-img-wrap">
+        <img id="crop-img" draggable="false" alt="">
+        <div id="crop-box">
+          <div class="crop-handle-br" id="crop-handle-br"></div>
+        </div>
+      </div>
+    </div>
+    <div class="crop-footer">
+      <span class="crop-hint">Trascina per riposizionare · Angolo in basso a destra per ridimensionare</span>
+      <button class="crop-btn-cancel" onclick="closeCropModal()">Annulla</button>
+      <button class="crop-btn-confirm" onclick="confirmCrop()">✓ Applica ritaglio</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Clip Editor ─────────────────────────────────────────────────────────── -->
+<div id="clip-modal" class="crop-modal">
+  <div class="clip-inner">
+    <div class="clip-header">
+      <h3>Crea clip dalla sorgente</h3>
+      <div class="clip-source-name" id="clip-source-name"></div>
+    </div>
+
+    <div class="clip-body">
+      <div class="clip-stage">
+        <video id="clip-preview" controls preload="metadata"></video>
+        <div class="clip-error" id="clip-error" style="display:none;">
+          <div><strong>Anteprima non disponibile</strong></div>
+          <div style="color:#aaa; font-size:0.85rem; max-width:340px;">
+            Il browser non riesce a riprodurre questo formato.
+            Inserisci comunque Inizio/Fine manualmente: la conversione finale viene fatta dal server.
+          </div>
+        </div>
+      </div>
+
+      <div class="clip-timeline" id="clip-timeline">
+        <div class="clip-timeline-bar"></div>
+        <div class="clip-timeline-selection" id="clip-timeline-selection"></div>
+        <div class="clip-timeline-playhead" id="clip-timeline-playhead"></div>
+      </div>
+
+      <div class="clip-time-row">
+        <div class="clip-time-field">
+          <label for="clip-start">Inizio (secondi)</label>
+          <div class="clip-time-group">
+            <input type="number" id="clip-start" step="0.1" min="0" placeholder="0.0">
+            <button type="button" class="btn-time" onclick="setClipFromPlayhead('start')">◂ Usa attuale</button>
+          </div>
+        </div>
+        <div class="clip-time-field">
+          <label for="clip-end">Fine (secondi)</label>
+          <div class="clip-time-group">
+            <input type="number" id="clip-end" step="0.1" min="0" placeholder="es. 5.5">
+            <button type="button" class="btn-time" onclick="setClipFromPlayhead('end')">Usa attuale ▸</button>
+          </div>
+        </div>
+        <div class="clip-duration-hint" id="clip-duration-hint">Lascia vuoto = video intero</div>
+      </div>
+
+      <div class="clip-targets">
+        <div class="clip-targets-label">Usa questa clip per:</div>
+        <label class="clip-target-chip"><input type="checkbox" id="clip-target-hero"> Hero</label>
+        <label class="clip-target-chip"><input type="checkbox" id="clip-target-cover"> Cover</label>
+        <label class="clip-target-chip"><input type="checkbox" id="clip-target-gallery"> Aggiungi a Gallery</label>
+      </div>
+
+      <details class="adv-options">
+        <summary>Parametri avanzati (FFmpeg)</summary>
+        <div class="adv-grid">
+          <div class="field"><label for="clip-bitrate">Bitrate</label><input type="text" id="clip-bitrate" value="1.5M"></div>
+          <div class="field"><label for="clip-maxrate">Maxrate</label><input type="text" id="clip-maxrate" value="3M"></div>
+          <div class="field"><label for="clip-fps">FPS</label><input type="number" id="clip-fps" value="25"></div>
+        </div>
+      </details>
+    </div>
+
+    <div class="clip-footer">
+      <span class="clip-hint">Le clip vengono compresse al salvataggio del progetto. Puoi creare più clip dalla stessa sorgente.</span>
+      <button class="crop-btn-cancel" onclick="closeClipEditor(false)">Annulla</button>
+      <button class="crop-btn-confirm" onclick="closeClipEditor(true)">✓ Aggiungi clip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Source Picker ───────────────────────────────────────────────────────── -->
+<div id="source-picker-modal" class="crop-modal">
+  <div class="crop-inner" style="width: min(620px, 95vw);">
+    <div class="crop-header"><h3>Scegli sorgente</h3></div>
+    <div class="source-picker-body" id="source-picker-body"></div>
+    <div class="crop-footer">
+      <span class="crop-hint">Le sorgenti restano disponibili finché il tool è acceso.</span>
+      <button class="crop-btn-cancel" onclick="closeSourcePicker()">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Progress Overlay (SSE) ──────────────────────────────────────────────── -->
+<div id="progress-overlay" class="loading-overlay" style="display:none;">
+  <div class="spinner"></div>
+  <div class="loading-title" id="progress-title">Salvataggio in corso…</div>
+  <div class="loading-sub" id="progress-sub">Preparazione media…</div>
+  <div class="progress-wrap">
+    <div class="progress-step-label" id="progress-step-label">Step 0/0</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+    <div class="progress-detail" id="progress-detail"></div>
+  </div>
+  <button class="progress-abort" id="progress-abort-btn" onclick="abortSave()">Annulla salvataggio</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

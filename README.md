@@ -1,140 +1,96 @@
 # mttcsr.com
 
-Personal portfolio website for Mattia Casarotto - Multimedia Designer
+Personal portfolio of Mattia Casarotto — Multimedia Designer.
+Static site built with [Astro](https://astro.build), deployed on Cloudflare Pages.
+
+## Commands
+
+Requires Node 22 (see `.node-version`) and pnpm.
+
+```bash
+pnpm install        # install dependencies
+pnpm dev            # dev server on http://localhost:4321
+pnpm build          # static build → dist/
+pnpm preview        # preview the build
+pnpm check          # type check
+pnpm content-tool   # content manager on http://localhost:3030/tool.html
+```
 
 ## Structure
 
 ```
-mttcsr-portfolio/
-├── index.html              # Main HTML
-├── css/
-│   ├── reset.css          # Browser normalization
-│   └── style.css          # All styles (variables, layout, components)
-├── js/
-│   ├── main.js            # Main initialization
-│   ├── projects.js        # File-based CMS and gallery autoscroll
-│   └── canvas/
-│       └── background.js  # Interactive particle canvas
-├── assets/
-│   ├── projects/          # Project folders
-│   │   ├── 01-project-name/
-│   │   │   ├── info.txt   # Title and description
-│   │   │   ├── 01-media.jpg
-│   │   │   ├── 02-media.mp4
-│   │   │   └── ...
-│   │   └── ...
-│   └── reel/              # Reel media files
-│       ├── 01-video.mp4
-│       ├── 02-still.jpg
-│       └── ...
-└── README.md
+src/
+├── content.config.ts        # 'works' collection schema
+├── content/works/           # one .md per project (frontmatter only)
+│   └── _template.md         # reference, published: false
+├── assets/works/<slug>/     # project media (hero, cover, gallery-N, *.thumb.jpg posters)
+├── pages/
+│   ├── index.astro          # hero canvas + about + selected works + CTA
+│   └── works/
+│       ├── index.astro      # works grid
+│       └── [slug].astro     # project page
+├── components/
+│   ├── layout/              # BaseLayout, SiteHeader, Footer, Loader
+│   ├── home/HomeHero.astro  # name, nav, ASCII canvas, about
+│   ├── works/               # WorkCard, WorksGrid, GalleryStrip, MetaList, ProjectNav
+│   └── ui/                  # Nav, Media, Arrow
+├── lib/                     # site config, media resolver, works helpers
+├── scripts/                 # morpho-ascii.js (canvas), loader.js
+└── styles/
+    ├── tokens.css           # design tokens — every visual value lives here
+    └── global.css           # reset, base and shared text styles
+content-tool/                # local content manager (Express + FFmpeg)
+public/                      # favicon, og-image
 ```
 
-## Setup
+## Adding a project
 
-1. Clone repository
-2. Open `index.html` in browser or use local server:
-   ```bash
-   python -m http.server 8000
-   # or
-   npx serve
-   ```
+### With the content tool (recommended)
 
-## Adding New Projects
+Double-click `start-tool.sh` (or run `pnpm content-tool`) and open http://localhost:3030/tool.html.
 
-The site uses a file-based CMS. To add a new project:
+- **Images** are converted to WebP in the browser (longest side 1920px, quality slider). HEIC is supported. Gallery images can be cropped, rotated and reordered.
+- **Videos** go through *Sorgenti Video*: upload the original once, cut clips and assign them to Hero, Cover or Gallery. On save they are encoded to WebM VP9, 720p, no audio, with a `.thumb.jpg` poster.
+- Saving writes `src/content/works/<slug>.md` and `src/assets/works/<slug>/`. Commit and push to publish.
+- *Nascondi* sets `published: false` without deleting anything.
 
-### 1. Create Project Folder
+### By hand
 
-Create a new folder in `assets/projects/` with the format `XX-project-name`:
-```
-assets/projects/04-new-project/
-```
+Copy `src/content/works/_template.md` to `<slug>.md`, put the media in `src/assets/works/<slug>/` and set `published: true`. Videos should have a `<name>.thumb.jpg` poster next to them.
 
-The number prefix (01, 02, 03...) determines the display order.
+| Field | Required | Notes |
+| --- | --- | --- |
+| `title` | yes | |
+| `subtitle` | no | shown under the title on the project page |
+| `hero` / `heroType` | yes | `image` or `video` |
+| `cover` / `coverType` | no | card media in the grid; defaults to hero |
+| `yearMonth` | no | `YYYY-MM`; sorts the grid (newest first), year shown on cards |
+| `text` | no | description, line breaks kept |
+| `context`, `award`, `role` | no | meta column on the project page |
+| `tags` | no | free text, shown on cards and project page |
+| `gallery` | no | list of `{ src, type }`, shown as the scrolling strip |
+| `published` | no | defaults to `true` |
 
-### 2. Add Project Info
+Projects without `yearMonth` are listed after dated ones, alphabetically. Previous/next links follow the grid order and wrap around.
 
-Create `info.txt` in the project folder:
-```
-#Project Title
-Project description goes here. You can add multiple paragraphs.
+## Media pipeline
 
-This is a second paragraph if needed.
-```
+- Images in `src/assets/works/` are processed at build time by `astro:assets` (responsive `srcset`, WebP). Animated WebP stays animated.
+- Videos are copied as-is (already encoded by the tool) and use the poster frame until they play.
 
-The first line starting with `#` becomes the title. Everything else is the description.
+## Design system
 
-### 3. Add Media Files
+Tokens are in `src/styles/tokens.css`. Monochrome (white at 100/80/60% on black), one accent `#00aa00` taken from the canvas palette (key `2`), Instrument Serif for voice and UI, Inter for body text. Fonts are self-hosted via `@fontsource`.
 
-Add images and videos with numbered prefixes:
-```
-01-hero.jpg
-02-detail.mp4
-03-closeup.png
-04-animation.gif
-```
+## Canvas
 
-Supported formats:
-- Images: `.jpg`, `.jpeg`, `.png`, `.gif`
-- Videos: `.mp4`, `.webm`
-
-Files are displayed in alphabetical order (hence the number prefixes).
-
-### 4. Update HTML
-
-Add a new section in `index.html` before the CTA section:
-```html
-<section class="project-section" data-project-folder="04-new-project">
-    <div class="project-container">
-        <h3 class="project-title">Loading...</h3>
-        <div class="project-gallery"></div>
-        <p class="project-description">Loading project details...</p>
-    </div>
-</section>
-```
-
-The `data-project-folder` attribute must match your folder name.
-
-## Adding Reel Media
-
-Add media files directly to `assets/reel/`:
-```
-assets/reel/
-├── 01-main-video.mp4
-├── 02-still-frame.jpg
-├── 03-experiment.gif
-└── ...
-```
-
-The reel section will automatically populate from these files.
-
-## Gallery Behavior
-
-- **Desktop**: Horizontal autoscroll (pauses on hover)
-- **Mobile**: Manual swipe/scroll
-- **Media**: Maintains aspect ratio, fixed height (~65vh)
-- Videos autoplay, loop, and are muted
-
-## Customization
-
-Edit design tokens at the top of `css/style.css`:
-- Colors
-- Spacing
-- Typography
-- Layout constraints
-
-## Canvas Background
-
-The interactive reaction-diffusion field in `js/canvas/background.js`:
-- Renders as ASCII art
-- Mouse/touch interactive (draw to add chemicals)
-- Gray-Scott algorithm parameters can be modified
+`src/scripts/morpho-ascii.js` renders a Gray-Scott reaction-diffusion field as ASCII.
+Draw with mouse/touch; hold Shift to erase, Ctrl/Cmd to add the other chemical; keys `1`–`9` switch palette, `0` toggles rainbow mode.
 
 ## Deploy
 
-Push to GitHub and connect to Cloudflare Pages for automatic deployment.
+Cloudflare Pages: build command `pnpm build`, output directory `dist`, Node version from `.node-version`.
 
 ---
 
-© 2025 Mattia Casarotto
+© Mattia Casarotto
