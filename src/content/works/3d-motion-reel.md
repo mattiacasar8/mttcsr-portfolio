@@ -4,6 +4,7 @@ hero: hero.webm
 heroType: video
 cover: cover.webm
 coverType: video
+yearMonth: 2025-10
 tags:
   - 3d
   - motion
@@ -18,3 +19,4 @@ gallery:
     type: video
 published: true
 ---
+
