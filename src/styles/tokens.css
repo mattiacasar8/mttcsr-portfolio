@@ -68,6 +68,7 @@
   --gallery-item-height: 480px;
   --gallery-item-min-w:  260px;
   --gallery-gap:         12px;
+  --gallery-max-per-row: 5;   /* 6+ per row only on very wide screens (below) */
   --gallery-hover-opacity: 0.85;
   --reveal-offset:       14px;
   --lightbox-backdrop:   rgba(0, 0, 0, 0.96);
@@ -88,6 +89,12 @@
   /* ── Links ─────────────────────────────────────────── */
   --underline-offset: 3px;
   --underline-offset-title: 4px;
+}
+
+@media (min-width: 2000px) {
+  :root {
+    --gallery-max-per-row: none;
+  }
 }
 
 @media (max-width: 1024px) {

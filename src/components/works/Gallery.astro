@@ -247,7 +247,8 @@ let imageIndex = 0;
   // ── Balanced rows ─────────────────────────────────────────────────────────
   // Plain wrapping fills each row greedily and can leave one item alone at the
   // end (e.g. 5 + 1). Keep the same number of rows but spread items evenly
-  // (3 + 3), breaking lines with zero-height elements.
+  // (3 + 3), breaking lines with zero-height elements. Rows never hold more
+  // than --gallery-max-per-row items, so wide screens keep the same grid.
   function balanceRows(gallery: HTMLElement) {
     gallery.querySelectorAll('.gallery__break').forEach((el) => el.remove());
     const items = [...gallery.querySelectorAll<HTMLElement>('[data-gallery-item]')];
@@ -255,7 +256,10 @@ let imageIndex = 0;
 
     // All items share the same flex-basis, so every greedy row holds as many as the first
     const firstTop = items[0].offsetTop;
-    const perRow = items.filter((item) => item.offsetTop === firstTop).length;
+    const fitting = items.filter((item) => item.offsetTop === firstTop).length;
+    // Optional cap from the tokens; 'none' (or unset) keeps what fits
+    const cap = parseInt(getComputedStyle(gallery).getPropertyValue('--gallery-max-per-row'), 10);
+    const perRow = Number.isFinite(cap) ? Math.min(fitting, cap) : fitting;
     const rows = Math.ceil(items.length / perRow);
     if (rows < 2 || perRow < 2) return;
 
