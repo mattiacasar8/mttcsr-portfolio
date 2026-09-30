@@ -84,17 +84,25 @@ let imageIndex = 0;
 )}
 
 <style>
+  /* Row spacing is a bottom margin on items (not row-gap) so the zero-height
+     row breaks inserted by the script don't add an extra gap */
   .gallery {
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
-    gap: var(--gallery-gap);
-    padding: 0 var(--page-margin) var(--space-64);
+    column-gap: var(--gallery-gap);
+    padding: 0 var(--page-margin) calc(var(--space-64) - var(--gallery-gap));
   }
 
   .gallery__item {
     flex: 1 0 var(--gallery-item-min-w);
     height: var(--gallery-item-height);
+    margin-bottom: var(--gallery-gap);
+  }
+
+  .gallery :global(.gallery__break) {
+    flex-basis: 100%;
+    height: 0;
   }
 
   .gallery__item :global(img),
@@ -236,6 +244,45 @@ let imageIndex = 0;
 </style>
 
 <script>
+  // ── Balanced rows ─────────────────────────────────────────────────────────
+  // Plain wrapping fills each row greedily and can leave one item alone at the
+  // end (e.g. 5 + 1). Keep the same number of rows but spread items evenly
+  // (3 + 3), breaking lines with zero-height elements.
+  function balanceRows(gallery: HTMLElement) {
+    gallery.querySelectorAll('.gallery__break').forEach((el) => el.remove());
+    const items = [...gallery.querySelectorAll<HTMLElement>('[data-gallery-item]')];
+    if (items.length < 2) return;
+
+    // All items share the same flex-basis, so every greedy row holds as many as the first
+    const firstTop = items[0].offsetTop;
+    const perRow = items.filter((item) => item.offsetTop === firstTop).length;
+    const rows = Math.ceil(items.length / perRow);
+    if (rows < 2 || perRow < 2) return;
+
+    const base = Math.floor(items.length / rows);
+    const extra = items.length % rows;
+    let index = 0;
+    for (let row = 0; row < rows - 1; row++) {
+      index += base + (row < extra ? 1 : 0);
+      const lineBreak = document.createElement('div');
+      lineBreak.className = 'gallery__break';
+      lineBreak.setAttribute('aria-hidden', 'true');
+      items[index - 1].after(lineBreak);
+    }
+  }
+
+  document.querySelectorAll<HTMLElement>('.gallery').forEach((gallery) => {
+    let lastWidth = 0;
+    let frame = 0;
+    new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      if (width === lastWidth) return;
+      lastWidth = width;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => balanceRows(gallery));
+    }).observe(gallery);
+  });
+
   // ── Reveal: fade in each item once its media has loaded ─────────────────
   document.querySelectorAll<HTMLElement>('[data-gallery-item]').forEach((item) => {
     const media = item.querySelector<HTMLImageElement | HTMLVideoElement>('img, video');
